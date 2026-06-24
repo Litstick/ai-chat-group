@@ -54,13 +54,24 @@ export interface AppSettings {
     minutes: number;
   };
   models: AIModel[];
+  apiKeys: APIKeyConfig;
 }
 
 export interface AIModel {
   id: string;
   name: string;
   provider: string;
+  modelId: string;
   isDefault: boolean;
+}
+
+export interface APIKeyConfig {
+  openai: string;
+  anthropic: string;
+  google: string;
+  openaiBaseUrl: string;
+  anthropicBaseUrl: string;
+  googleBaseUrl: string;
 }
 
 export interface Skill {

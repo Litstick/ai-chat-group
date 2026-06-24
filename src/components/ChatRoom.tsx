@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore } from '../store/useStore';
-import type { ChatMessage } from '../types';
+import type { ChatMessage, AIAgent, AIModel } from '../types';
+import { callAI, callAIForSummary } from '../utils/aiService';
 import {
   Send,
   Square,
@@ -12,37 +13,29 @@ import {
   Smile,
   Sparkles,
   User,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
-
-const AI_RESPONSES = [
-  '这个想法很有意思，我认为可以从用户体验的角度再优化一下。',
-  '从数据角度来看，这个方案的可行性很高，建议先做一个小范围的测试。',
-  '技术上实现没有问题，但需要考虑性能和扩展性。',
-  '我同意前面的观点，另外补充一点关于安全性的考虑。',
-  '这个需求很清晰，我可以帮忙整理一份详细的需求文档。',
-  '从设计角度来说，建议采用更简洁的交互方式。',
-  '我们可以用敏捷开发的方式，分阶段实现这个功能。',
-  '让我搜索一下相关的最佳实践和案例。',
-  '数据分析显示，用户对这个功能的接受度应该会很高。',
-  '我建议我们先定义好核心指标，然后再开始开发。',
-];
 
 export default function ChatRoom() {
   const {
     currentSession,
     addMessage,
     endSession,
-    generateSummary,
     setCurrentPage,
     settings,
     isInActiveHours,
+    agents,
   } = useStore();
 
   const [input, setInput] = useState('');
   const [showSummary, setShowSummary] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const aiQueueRef = useRef<boolean>(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -52,40 +45,95 @@ export default function ChatRoom() {
     scrollToBottom();
   }, [currentSession?.messages]);
 
+  const findModelForAgent = useCallback(
+    (agent: AIAgent): AIModel | undefined => {
+      return settings.models.find((m) => m.id === agent.model);
+    },
+    [settings.models]
+  );
+
+  const getApiKeyForProvider = useCallback(
+    (provider: string): string => {
+      const p = provider.toLowerCase();
+      if (p === 'openai') return settings.apiKeys.openai;
+      if (p === 'anthropic') return settings.apiKeys.anthropic;
+      if (p === 'google') return settings.apiKeys.google;
+      return '';
+    },
+    [settings.apiKeys]
+  );
+
+  const triggerAIDiscussion = useCallback(
+    async (triggerMessage?: ChatMessage) => {
+      if (!currentSession?.isActive || aiQueueRef.current) return;
+      aiQueueRef.current = true;
+
+      try {
+        // 随机选一个 AI 来发言
+        const participants = currentSession.participants;
+        const agent = participants[Math.floor(Math.random() * participants.length)];
+        const model = findModelForAgent(agent);
+        if (!model) {
+          setError(`找不到 ${agent.name} 对应的模型配置`);
+          return;
+        }
+
+        const apiKey = getApiKeyForProvider(model.provider);
+        if (!apiKey) {
+          setError(`${model.provider} 的 API Key 未配置，请在设置中添加`);
+          return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+
+        const response = await callAI(
+          agent,
+          model,
+          settings.apiKeys,
+          currentSession.topic,
+          currentSession.messages,
+          triggerMessage
+        );
+
+        if (!currentSession.isActive) return;
+
+        const message: ChatMessage = {
+          id: `msg-${Date.now()}`,
+          senderId: agent.id,
+          senderName: agent.name,
+          senderAvatar: agent.avatar,
+          content: response,
+          type: 'text',
+          timestamp: Date.now(),
+          isAI: true,
+        };
+
+        addMessage(currentSession.id, message);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'AI 调用失败';
+        setError(msg);
+      } finally {
+        setIsLoading(false);
+        aiQueueRef.current = false;
+      }
+    },
+    [currentSession, findModelForAgent, getApiKeyForProvider, settings.apiKeys, addMessage]
+  );
+
   useEffect(() => {
-    if (currentSession?.isActive && isInActiveHours()) {
-      startAIChat();
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [currentSession?.id]);
+    if (!currentSession?.isActive || !isInActiveHours()) return;
 
-  const startAIChat = () => {
-    if (!currentSession) return;
-    // AI 自动发言间隔
+    // 首次进入时，触发第一个 AI 发言
+    const initialTimer = setTimeout(() => {
+      triggerAIDiscussion();
+    }, 1500);
+
+    // 定时触发 AI 讨论（每 8-15 秒）
     intervalRef.current = setInterval(() => {
-      if (!isInActiveHours()) return;
-      const activeAgents = currentSession.participants;
-      if (activeAgents.length === 0) return;
-
-      const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-      const response = AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)];
-
-      const message: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        senderId: agent.id,
-        senderName: agent.name,
-        senderAvatar: agent.avatar,
-        content: response,
-        type: settings.aiCapabilities.emojiReply && Math.random() > 0.7 ? 'emoji' : 'text',
-        timestamp: Date.now(),
-        isAI: true,
-      };
-
-      addMessage(currentSession.id, message);
-    }, 3000 + Math.random() * 4000);
+      if (!isInActiveHours() || !currentSession.isActive) return;
+      triggerAIDiscussion();
+    }, 8000 + Math.random() * 7000);
 
     // 自动终止
     if (settings.chatDuration.enabled) {
@@ -93,9 +141,15 @@ export default function ChatRoom() {
         handleEndChat();
       }, settings.chatDuration.minutes * 60 * 1000);
     }
-  };
 
-  const handleSend = () => {
+    return () => {
+      clearTimeout(initialTimer);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [currentSession?.id]);
+
+  const handleSend = async () => {
     if (!input.trim() || !currentSession) return;
 
     const message: ChatMessage = {
@@ -112,26 +166,10 @@ export default function ChatRoom() {
     addMessage(currentSession.id, message);
     setInput('');
 
-    // 用户发言后，AI 更有可能回应
+    // 用户发言后，触发 AI 回应
     setTimeout(() => {
-      if (!currentSession.isActive || !isInActiveHours()) return;
-      const activeAgents = currentSession.participants;
-      const agent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
-      const response = AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)];
-
-      const aiMessage: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        senderId: agent.id,
-        senderName: agent.name,
-        senderAvatar: agent.avatar,
-        content: `回复 @我：${response}`,
-        type: 'text',
-        timestamp: Date.now(),
-        isAI: true,
-      };
-
-      addMessage(currentSession.id, aiMessage);
-    }, 1500);
+      triggerAIDiscussion(message);
+    }, 1000);
   };
 
   const handleEndChat = () => {
@@ -141,10 +179,50 @@ export default function ChatRoom() {
     endSession(currentSession.id);
   };
 
-  const handleSummarize = () => {
+  const handleSummarize = async () => {
     if (!currentSession) return;
-    generateSummary(currentSession.id);
-    setShowSummary(true);
+
+    const defaultModel = settings.models.find((m) => m.isDefault);
+    if (!defaultModel) {
+      setError('没有可用的默认模型来生成总结');
+      return;
+    }
+
+    const apiKey = getApiKeyForProvider(defaultModel.provider);
+    if (!apiKey) {
+      setError('API Key 未配置，无法生成总结');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const summary = await callAIForSummary(
+        defaultModel,
+        settings.apiKeys,
+        currentSession.topic,
+        currentSession.messages
+      );
+
+      const sessions = useStore.getState().sessions;
+      const updatedSessions = sessions.map((s) =>
+        s.id === currentSession.id ? { ...s, summary } : s
+      );
+      const { updateSession } = useStore.getState();
+      // 直接通过 store 更新
+      useStore.setState({
+        sessions: updatedSessions,
+        currentSession: { ...currentSession, summary },
+      });
+      localStorage.setItem('ai_chat_sessions', JSON.stringify(updatedSessions));
+      setShowSummary(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '总结生成失败';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!currentSession) {
@@ -197,7 +275,8 @@ export default function ChatRoom() {
             <>
               <button
                 onClick={handleSummarize}
-                className="px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors flex items-center gap-1 text-sm font-medium"
+                disabled={isLoading}
+                className="px-3 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors flex items-center gap-1 text-sm font-medium disabled:opacity-50"
               >
                 <Sparkles className="w-4 h-4" />
                 一键总结
@@ -220,22 +299,48 @@ export default function ChatRoom() {
           <User className="w-4 h-4" />
           参与者：
         </div>
-        {currentSession.participants.map((agent) => (
-          <div key={agent.id} className="flex items-center gap-1.5 shrink-0">
-            <img src={agent.avatar} alt={agent.name} className="w-6 h-6 rounded-full" />
-            <span className="text-sm text-gray-700">{agent.name}</span>
-          </div>
-        ))}
+        {currentSession.participants.map((agent) => {
+          const model = findModelForAgent(agent);
+          return (
+            <div key={agent.id} className="flex items-center gap-1.5 shrink-0">
+              <img src={agent.avatar} alt={agent.name} className="w-6 h-6 rounded-full" />
+              <span className="text-sm text-gray-700">{agent.name}</span>
+              {model && (
+                <span className="text-xs text-gray-400">({model.name})</span>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+          <span className="text-sm text-red-700 flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
+            关闭
+          </button>
+        </div>
+      )}
+
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 flex items-center gap-2">
+          <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+          <span className="text-sm text-blue-700">AI 正在思考中...</span>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {currentSession.messages.length === 0 && (
+        {currentSession.messages.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-8 h-8 text-blue-500" />
             </div>
             <p className="text-gray-500">聊天已开始，AI 们正在准备中...</p>
+            <p className="text-sm text-gray-400 mt-1">请确保已在设置中配置 API Key</p>
           </div>
         )}
 
@@ -359,7 +464,7 @@ export default function ChatRoom() {
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim()}
+              disabled={!input.trim() || isLoading}
               className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-5 h-5" />

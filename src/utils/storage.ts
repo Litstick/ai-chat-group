@@ -1,4 +1,4 @@
-import { ChatSession, AppSettings, AIAgent, Skill } from '../types';
+import type { ChatSession, AppSettings, AIAgent, Skill } from '../types';
 
 const STORAGE_KEYS = {
   sessions: 'ai_chat_sessions',
@@ -24,11 +24,19 @@ export const defaultSettings: AppSettings = {
     minutes: 30,
   },
   models: [
-    { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', isDefault: true },
-    { id: 'gpt-3.5', name: 'GPT-3.5', provider: 'OpenAI', isDefault: false },
-    { id: 'claude-3', name: 'Claude 3', provider: 'Anthropic', isDefault: false },
-    { id: 'gemini', name: 'Gemini Pro', provider: 'Google', isDefault: false },
+    { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', modelId: 'gpt-4o', isDefault: true },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', modelId: 'gpt-4o-mini', isDefault: false },
+    { id: 'claude-sonnet', name: 'Claude Sonnet 4', provider: 'Anthropic', modelId: 'claude-sonnet-4-20250514', isDefault: false },
+    { id: 'gemini', name: 'Gemini 2.5 Pro', provider: 'Google', modelId: 'gemini-2.5-pro-preview-06-05', isDefault: false },
   ],
+  apiKeys: {
+    openai: '',
+    anthropic: '',
+    google: '',
+    openaiBaseUrl: 'https://api.openai.com',
+    anthropicBaseUrl: 'https://api.anthropic.com',
+    googleBaseUrl: 'https://generativelanguage.googleapis.com',
+  },
 };
 
 export const defaultAgents: AIAgent[] = [
@@ -38,7 +46,7 @@ export const defaultAgents: AIAgent[] = [
     avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=1',
     role: '产品经理',
     description: '擅长需求分析和产品设计',
-    model: 'gpt-4',
+    model: 'gpt-4o',
     skills: [],
     isActive: true,
   },
@@ -48,7 +56,7 @@ export const defaultAgents: AIAgent[] = [
     avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=2',
     role: '开发工程师',
     description: '全栈开发专家',
-    model: 'gpt-4',
+    model: 'gpt-4o',
     skills: [],
     isActive: true,
   },
@@ -58,7 +66,7 @@ export const defaultAgents: AIAgent[] = [
     avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=3',
     role: 'UI设计师',
     description: '专注于用户体验和视觉设计',
-    model: 'claude-3',
+    model: 'claude-sonnet',
     skills: [],
     isActive: true,
   },
@@ -78,7 +86,7 @@ export const defaultAgents: AIAgent[] = [
     avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=5',
     role: '测试工程师',
     description: '质量保证和自动化测试',
-    model: 'gpt-3.5',
+    model: 'gpt-4o-mini',
     skills: [],
     isActive: false,
   },
@@ -110,7 +118,11 @@ export const storage = {
   getSettings(): AppSettings {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.settings);
-      return data ? { ...defaultSettings, ...JSON.parse(data) } : defaultSettings;
+      if (data) {
+        const parsed = JSON.parse(data);
+        return { ...defaultSettings, ...parsed, apiKeys: { ...defaultSettings.apiKeys, ...parsed.apiKeys } };
+      }
+      return defaultSettings;
     } catch {
       return defaultSettings;
     }
