@@ -236,6 +236,231 @@ export default function Settings() {
                     </div>
                   </div>
                 </div>
+
+                {/* DeepSeek */}
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <span className="text-sm font-bold text-indigo-700">D</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">DeepSeek</div>
+                        <div className="text-xs text-gray-500">DeepSeek V3, R1 等</div>
+                      </div>
+                    </div>
+                    {localSettings.apiKeys.deepseek && (
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input
+                        type={showKeys.deepseek ? 'text' : 'password'}
+                        value={localSettings.apiKeys.deepseek}
+                        onChange={(e) => updateApiKey('deepseek', e.target.value)}
+                        placeholder="sk-..."
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => toggleKeyVisibility('deepseek')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showKeys.deepseek ? '隐藏' : '显示'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={localSettings.apiKeys.deepseekBaseUrl}
+                        onChange={(e) => updateApiKey('deepseekBaseUrl', e.target.value)}
+                        placeholder="API Base URL"
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Qwen */}
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span className="text-sm font-bold text-purple-700">Q</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">通义千问</div>
+                        <div className="text-xs text-gray-500">Qwen Max, Plus 等</div>
+                      </div>
+                    </div>
+                    {localSettings.apiKeys.qwen && (
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input
+                        type={showKeys.qwen ? 'text' : 'password'}
+                        value={localSettings.apiKeys.qwen}
+                        onChange={(e) => updateApiKey('qwen', e.target.value)}
+                        placeholder="sk-..."
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => toggleKeyVisibility('qwen')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showKeys.qwen ? '隐藏' : '显示'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={localSettings.apiKeys.qwenBaseUrl}
+                        onChange={(e) => updateApiKey('qwenBaseUrl', e.target.value)}
+                        placeholder="API Base URL"
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Moonshot */}
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center">
+                        <span className="text-sm font-bold text-sky-700">M</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">Moonshot</div>
+                        <div className="text-xs text-gray-500">Moonshot V1 等</div>
+                      </div>
+                    </div>
+                    {localSettings.apiKeys.moonshot && (
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input
+                        type={showKeys.moonshot ? 'text' : 'password'}
+                        value={localSettings.apiKeys.moonshot}
+                        onChange={(e) => updateApiKey('moonshot', e.target.value)}
+                        placeholder="sk-..."
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => toggleKeyVisibility('moonshot')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showKeys.moonshot ? '隐藏' : '显示'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={localSettings.apiKeys.moonshotBaseUrl}
+                        onChange={(e) => updateApiKey('moonshotBaseUrl', e.target.value)}
+                        placeholder="API Base URL"
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Zhipu */}
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                        <span className="text-sm font-bold text-teal-700">Z</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">智谱 AI</div>
+                        <div className="text-xs text-gray-500">GLM-4 等</div>
+                      </div>
+                    </div>
+                    {localSettings.apiKeys.zhipu && (
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input
+                        type={showKeys.zhipu ? 'text' : 'password'}
+                        value={localSettings.apiKeys.zhipu}
+                        onChange={(e) => updateApiKey('zhipu', e.target.value)}
+                        placeholder="API Key"
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => toggleKeyVisibility('zhipu')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showKeys.zhipu ? '隐藏' : '显示'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={localSettings.apiKeys.zhipuBaseUrl}
+                        onChange={(e) => updateApiKey('zhipuBaseUrl', e.target.value)}
+                        placeholder="API Base URL"
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Baidu */}
+                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                        <span className="text-sm font-bold text-red-700">B</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">百度文心一言</div>
+                        <div className="text-xs text-gray-500">ERNIE 4.0 等</div>
+                      </div>
+                    </div>
+                    {localSettings.apiKeys.baidu && (
+                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input
+                        type={showKeys.baidu ? 'text' : 'password'}
+                        value={localSettings.apiKeys.baidu}
+                        onChange={(e) => updateApiKey('baidu', e.target.value)}
+                        placeholder="API Key"
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => toggleKeyVisibility('baidu')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showKeys.baidu ? '隐藏' : '显示'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={localSettings.apiKeys.baiduBaseUrl}
+                        onChange={(e) => updateApiKey('baiduBaseUrl', e.target.value)}
+                        placeholder="API Base URL"
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -432,6 +657,11 @@ export default function Settings() {
                       <option value="OpenAI">OpenAI</option>
                       <option value="Anthropic">Anthropic</option>
                       <option value="Google">Google</option>
+                      <option value="DeepSeek">DeepSeek</option>
+                      <option value="Qwen">通义千问</option>
+                      <option value="Moonshot">Moonshot</option>
+                      <option value="Zhipu">智谱 AI</option>
+                      <option value="Baidu">百度文心一言</option>
                     </select>
                   </div>
                   <div className="flex gap-2">

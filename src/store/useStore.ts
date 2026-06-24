@@ -1,10 +1,15 @@
 import { create } from 'zustand';
-import { ChatSession, AppSettings, AIAgent, Skill, Page, ChatMessage } from '../types';
-import { storage } from '../utils/storage';
+import { ChatSession, AppSettings, AIAgent, Skill, Page, ChatMessage, User } from '../types';
+import { storage, userStorage } from '../utils/storage';
 
 interface AppState {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
+
+  currentUser: User | null;
+  login: (user: User) => void;
+  logout: () => void;
+  updateUser: (user: User) => void;
 
   sessions: ChatSession[];
   currentSession: ChatSession | null;
@@ -13,7 +18,7 @@ interface AppState {
   updateSession: (session: ChatSession) => void;
   endSession: (sessionId: string) => void;
   addMessage: (sessionId: string, message: ChatMessage) => void;
-  generateSummary: (sessionId: string) => void;
+  loadUserSessions: () => void;
 
   settings: AppSettings;
   updateSettings: (settings: Partial<AppSettings>) => void;
@@ -30,9 +35,32 @@ export const useStore = create<AppState>((set, get) => ({
   currentPage: 'home',
   setCurrentPage: (page) => set({ currentPage: page }),
 
-  sessions: storage.getSessions(),
+  currentUser: userStorage.getCurrentUser(),
+  login: (user) => {
+    userStorage.setCurrentUser(user);
+    set({ currentUser: user });
+    get().loadUserSessions();
+  },
+  logout: () => {
+    userStorage.logout();
+    set({ currentUser: null, sessions: [], currentSession: null, currentPage: 'home' });
+  },
+  updateUser: (user) => {
+    userStorage.updateUser(user);
+    set({ currentUser: user });
+  },
+
+  sessions: [],
   currentSession: null,
   setCurrentSession: (session) => set({ currentSession: session }),
+
+  loadUserSessions: () => {
+    const user = get().currentUser;
+    if (user) {
+      const sessions = storage.getSessions(user.id);
+      set({ sessions });
+    }
+  },
 
   addSession: (session) => {
     const sessions = [...get().sessions, session];
@@ -66,32 +94,6 @@ export const useStore = create<AppState>((set, get) => ({
     const current = get().currentSession;
     if (current?.id === sessionId) {
       set({ currentSession: { ...current, messages: [...current.messages, message] } });
-    }
-    set({ sessions });
-  },
-
-  generateSummary: (sessionId) => {
-    const session = get().sessions.find((s) => s.id === sessionId);
-    if (!session) return;
-
-    const aiMessages = session.messages.filter((m) => m.isAI);
-    const important = aiMessages
-      .filter((_, i) => i % 3 === 0)
-      .slice(0, 5)
-      .map((m) => m.content.substring(0, 100) + (m.content.length > 100 ? '...' : ''));
-    const secondary = aiMessages
-      .filter((_, i) => i % 3 === 1)
-      .slice(0, 5)
-      .map((m) => m.content.substring(0, 80) + (m.content.length > 80 ? '...' : ''));
-
-    const summary = { important, secondary, generatedAt: Date.now() };
-    const sessions = get().sessions.map((s) =>
-      s.id === sessionId ? { ...s, summary } : s
-    );
-    storage.saveSessions(sessions);
-    const current = get().currentSession;
-    if (current?.id === sessionId) {
-      set({ currentSession: { ...current, summary } });
     }
     set({ sessions });
   },

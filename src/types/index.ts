@@ -1,3 +1,11 @@
+export interface User {
+  id: string;
+  username: string;
+  nickname: string;
+  avatar: string;
+  createdAt: number;
+}
+
 export interface AIAgent {
   id: string;
   name: string;
@@ -22,6 +30,7 @@ export interface ChatMessage {
 
 export interface ChatSession {
   id: string;
+  userId: string;
   topic: string;
   startTime: number;
   endTime?: number;
@@ -72,6 +81,16 @@ export interface APIKeyConfig {
   openaiBaseUrl: string;
   anthropicBaseUrl: string;
   googleBaseUrl: string;
+  deepseek: string;
+  deepseekBaseUrl: string;
+  qwen: string;
+  qwenBaseUrl: string;
+  moonshot: string;
+  moonshotBaseUrl: string;
+  zhipu: string;
+  zhipuBaseUrl: string;
+  baidu: string;
+  baiduBaseUrl: string;
 }
 
 export interface Skill {
@@ -81,4 +100,4 @@ export interface Skill {
   icon: string;
 }
 
-export type Page = 'home' | 'settings' | 'chat' | 'history' | 'agents';
+export type Page = 'home' | 'settings' | 'chat' | 'history' | 'agents' | 'profile' | 'login';

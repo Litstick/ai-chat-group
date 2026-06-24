@@ -10,6 +10,8 @@ import {
   Clock,
   ArrowRight,
   Sparkles,
+  UserCircle,
+  LogOut,
 } from 'lucide-react';
 
 export default function Home() {
@@ -20,6 +22,8 @@ export default function Home() {
     setCurrentSession,
     addSession,
     settings,
+    currentUser,
+    logout,
   } = useStore();
 
   const [topic, setTopic] = useState('');
@@ -29,6 +33,7 @@ export default function Home() {
 
   const handleStartChat = () => {
     if (!topic.trim()) return;
+    if (!currentUser) return;
     if (activeAgents.length < 2) {
       alert('请至少选择 2 个 AI 参与群聊');
       setCurrentPage('agents');
@@ -37,6 +42,7 @@ export default function Home() {
 
     const session: ChatSession = {
       id: `session-${Date.now()}`,
+      userId: currentUser.id,
       topic: topic.trim(),
       startTime: Date.now(),
       messages: [],
@@ -75,12 +81,25 @@ export default function Home() {
               <h1 className="text-2xl font-bold text-gray-900">AI 聊天群</h1>
               <p className="text-gray-500 mt-1">与多个 AI 一起协作讨论</p>
             </div>
-            <button
-              onClick={() => setCurrentPage('settings')}
-              className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-            >
-              <Settings className="w-5 h-5 text-gray-600" />
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCurrentPage('profile')}
+                className="flex items-center gap-2 p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                <img
+                  src={currentUser?.avatar}
+                  alt=""
+                  className="w-6 h-6 rounded-full"
+                />
+                <span className="text-sm text-gray-700 max-w-[80px] truncate">{currentUser?.nickname}</span>
+              </button>
+              <button
+                onClick={() => setCurrentPage('settings')}
+                className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                <Settings className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

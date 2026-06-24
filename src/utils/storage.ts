@@ -1,6 +1,8 @@
-import type { ChatSession, AppSettings, AIAgent, Skill } from '../types';
+import type { ChatSession, AppSettings, AIAgent, Skill, User } from '../types';
 
 const STORAGE_KEYS = {
+  currentUser: 'ai_chat_current_user',
+  users: 'ai_chat_users',
   sessions: 'ai_chat_sessions',
   settings: 'ai_chat_settings',
   agents: 'ai_chat_agents',
@@ -24,10 +26,19 @@ export const defaultSettings: AppSettings = {
     minutes: 30,
   },
   models: [
+    // 海外模型
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI', modelId: 'gpt-4o', isDefault: true },
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI', modelId: 'gpt-4o-mini', isDefault: false },
     { id: 'claude-sonnet', name: 'Claude Sonnet 4', provider: 'Anthropic', modelId: 'claude-sonnet-4-20250514', isDefault: false },
     { id: 'gemini', name: 'Gemini 2.5 Pro', provider: 'Google', modelId: 'gemini-2.5-pro-preview-06-05', isDefault: false },
+    // 国内模型
+    { id: 'deepseek-chat', name: 'DeepSeek V3', provider: 'DeepSeek', modelId: 'deepseek-chat', isDefault: false },
+    { id: 'deepseek-reasoner', name: 'DeepSeek R1', provider: 'DeepSeek', modelId: 'deepseek-reasoner', isDefault: false },
+    { id: 'qwen-max', name: '通义千问 Max', provider: 'Qwen', modelId: 'qwen-max', isDefault: false },
+    { id: 'qwen-plus', name: '通义千问 Plus', provider: 'Qwen', modelId: 'qwen-plus', isDefault: false },
+    { id: 'moonshot-v1', name: 'Moonshot V1', provider: 'Moonshot', modelId: 'moonshot-v1-8k', isDefault: false },
+    { id: 'glm-4', name: '智谱 GLM-4', provider: 'Zhipu', modelId: 'glm-4', isDefault: false },
+    { id: 'ernie-4', name: '文心一言 4.0', provider: 'Baidu', modelId: 'ernie-4.0-8k', isDefault: false },
   ],
   apiKeys: {
     openai: '',
@@ -36,6 +47,16 @@ export const defaultSettings: AppSettings = {
     openaiBaseUrl: 'https://api.openai.com',
     anthropicBaseUrl: 'https://api.anthropic.com',
     googleBaseUrl: 'https://generativelanguage.googleapis.com',
+    deepseek: '',
+    deepseekBaseUrl: 'https://api.deepseek.com',
+    qwen: '',
+    qwenBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode',
+    moonshot: '',
+    moonshotBaseUrl: 'https://api.moonshot.cn',
+    zhipu: '',
+    zhipuBaseUrl: 'https://open.bigmodel.cn/api/paas',
+    baidu: '',
+    baiduBaseUrl: 'https://qianfan.baidubce.com',
   },
 };
 
@@ -101,18 +122,111 @@ export const defaultSkills: Skill[] = [
   { id: 'skill-6', name: '搜索', description: '网络搜索和信息检索', icon: 'search' },
 ];
 
+// ===== 用户管理 =====
+
+function getAllUsers(): User[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.users);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveAllUsers(users: User[]) {
+  localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
+}
+
+export const userStorage = {
+  getCurrentUser(): User | null {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.currentUser);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  setCurrentUser(user: User | null) {
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.currentUser);
+    }
+  },
+
+  register(username: string, password: string, nickname: string): User | string {
+    const users = getAllUsers();
+    if (users.find((u) => u.username === username)) {
+      return '用户名已存在';
+    }
+    const user: User = {
+      id: `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      username,
+      nickname: nickname || username,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+      createdAt: Date.now(),
+    };
+    users.push(user);
+    saveAllUsers(users);
+    // 存储密码（简单实现，生产环境应使用后端）
+    localStorage.setItem(`pwd_${user.id}`, password);
+    return user;
+  },
+
+  login(username: string, password: string): User | string {
+    const users = getAllUsers();
+    const user = users.find((u) => u.username === username);
+    if (!user) return '用户不存在';
+    const storedPwd = localStorage.getItem(`pwd_${user.id}`);
+    if (storedPwd !== password) return '密码错误';
+    return user;
+  },
+
+  logout() {
+    localStorage.removeItem(STORAGE_KEYS.currentUser);
+  },
+
+  updateUser(user: User) {
+    const users = getAllUsers();
+    const idx = users.findIndex((u) => u.id === user.id);
+    if (idx >= 0) {
+      users[idx] = user;
+      saveAllUsers(users);
+    }
+    localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(user));
+  },
+};
+
+// ===== 会话管理（按用户隔离） =====
+
 export const storage = {
-  getSessions(): ChatSession[] {
+  getSessions(userId?: string): ChatSession[] {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.sessions);
-      return data ? JSON.parse(data) : [];
+      const all: ChatSession[] = data ? JSON.parse(data) : [];
+      if (userId) {
+        return all.filter((s) => s.userId === userId);
+      }
+      return all;
     } catch {
       return [];
     }
   },
 
   saveSessions(sessions: ChatSession[]) {
-    localStorage.setItem(STORAGE_KEYS.sessions, JSON.stringify(sessions));
+    try {
+      // 读取已有数据，合并保存（避免覆盖其他用户的数据）
+      const existing = localStorage.getItem(STORAGE_KEYS.sessions);
+      const all: ChatSession[] = existing ? JSON.parse(existing) : [];
+      const existingIds = new Set(sessions.map((s) => s.id));
+      // 保留不属于当前批次的旧数据
+      const kept = all.filter((s) => !existingIds.has(s.id));
+      const merged = [...kept, ...sessions];
+      localStorage.setItem(STORAGE_KEYS.sessions, JSON.stringify(merged));
+    } catch {
+      localStorage.setItem(STORAGE_KEYS.sessions, JSON.stringify(sessions));
+    }
   },
 
   getSettings(): AppSettings {

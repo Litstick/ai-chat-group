@@ -221,6 +221,51 @@ export async function callAI(
     );
   }
 
+  if (provider === 'deepseek') {
+    return callOpenAI(
+      apiKeys.deepseek,
+      apiKeys.deepseekBaseUrl,
+      model.modelId,
+      messages
+    );
+  }
+
+  if (provider === 'qwen') {
+    return callOpenAI(
+      apiKeys.qwen,
+      apiKeys.qwenBaseUrl,
+      model.modelId,
+      messages
+    );
+  }
+
+  if (provider === 'moonshot') {
+    return callOpenAI(
+      apiKeys.moonshot,
+      apiKeys.moonshotBaseUrl,
+      model.modelId,
+      messages
+    );
+  }
+
+  if (provider === 'zhipu') {
+    return callOpenAI(
+      apiKeys.zhipu,
+      apiKeys.zhipuBaseUrl,
+      model.modelId,
+      messages
+    );
+  }
+
+  if (provider === 'baidu') {
+    return callOpenAI(
+      apiKeys.baidu,
+      apiKeys.baiduBaseUrl,
+      model.modelId,
+      messages
+    );
+  }
+
   throw new Error(`不支持的模型提供商：${model.provider}`);
 }
 
@@ -260,6 +305,31 @@ ${content}
     ]);
   } else if (provider === 'google') {
     result = await callGoogle(apiKeys.google, apiKeys.googleBaseUrl, model.modelId, [
+      { role: 'user', content: prompt },
+    ]);
+  } else if (provider === 'deepseek') {
+    result = await callOpenAI(apiKeys.deepseek, apiKeys.deepseekBaseUrl, model.modelId, [
+      { role: 'system', content: '你是一个专业的会议记录总结助手。请严格按 JSON 格式输出。' },
+      { role: 'user', content: prompt },
+    ]);
+  } else if (provider === 'qwen') {
+    result = await callOpenAI(apiKeys.qwen, apiKeys.qwenBaseUrl, model.modelId, [
+      { role: 'system', content: '你是一个专业的会议记录总结助手。请严格按 JSON 格式输出。' },
+      { role: 'user', content: prompt },
+    ]);
+  } else if (provider === 'moonshot') {
+    result = await callOpenAI(apiKeys.moonshot, apiKeys.moonshotBaseUrl, model.modelId, [
+      { role: 'system', content: '你是一个专业的会议记录总结助手。请严格按 JSON 格式输出。' },
+      { role: 'user', content: prompt },
+    ]);
+  } else if (provider === 'zhipu') {
+    result = await callOpenAI(apiKeys.zhipu, apiKeys.zhipuBaseUrl, model.modelId, [
+      { role: 'system', content: '你是一个专业的会议记录总结助手。请严格按 JSON 格式输出。' },
+      { role: 'user', content: prompt },
+    ]);
+  } else if (provider === 'baidu') {
+    result = await callOpenAI(apiKeys.baidu, apiKeys.baiduBaseUrl, model.modelId, [
+      { role: 'system', content: '你是一个专业的会议记录总结助手。请严格按 JSON 格式输出。' },
       { role: 'user', content: prompt },
     ]);
   } else {
