@@ -11,15 +11,176 @@ import {
   Key,
   Globe,
   AlertTriangle,
+  ChevronRight,
+  ArrowLeft,
+  Save,
+  ShieldCheck,
+  ShieldAlert,
 } from 'lucide-react';
+import type { AIModel, APIKeyConfig } from '../types';
 
+// 提供商配置映射
+const PROVIDER_CONFIG: Record<string, { label: string; color: string; letter: string; keyField: keyof APIKeyConfig; urlField: keyof APIKeyConfig; placeholder: string }> = {
+  openai: { label: 'OpenAI', color: 'green', letter: 'O', keyField: 'openai', urlField: 'openaiBaseUrl', placeholder: 'sk-...' },
+  anthropic: { label: 'Anthropic', color: 'orange', letter: 'A', keyField: 'anthropic', urlField: 'anthropicBaseUrl', placeholder: 'sk-ant-...' },
+  google: { label: 'Google AI', color: 'blue', letter: 'G', keyField: 'google', urlField: 'googleBaseUrl', placeholder: 'AIza...' },
+  deepseek: { label: 'DeepSeek', color: 'indigo', letter: 'D', keyField: 'deepseek', urlField: 'deepseekBaseUrl', placeholder: 'sk-...' },
+  qwen: { label: '通义千问', color: 'purple', letter: 'Q', keyField: 'qwen', urlField: 'qwenBaseUrl', placeholder: 'sk-...' },
+  moonshot: { label: 'Moonshot', color: 'sky', letter: 'M', keyField: 'moonshot', urlField: 'moonshotBaseUrl', placeholder: 'sk-...' },
+  zhipu: { label: '智谱 AI', color: 'teal', letter: 'Z', keyField: 'zhipu', urlField: 'zhipuBaseUrl', placeholder: 'API Key' },
+  baidu: { label: '百度文心一言', color: 'red', letter: 'B', keyField: 'baidu', urlField: 'baiduBaseUrl', placeholder: 'API Key' },
+};
+
+const PROVIDER_TO_LOWERCASE: Record<string, string> = {
+  openai: 'openai', anthropic: 'anthropic', google: 'google',
+  deepseek: 'deepseek', qwen: 'qwen', moonshot: 'moonshot',
+  zhipu: 'zhipu', baidu: 'baidu',
+};
+
+function getApiKeyForProvider(apiKeys: APIKeyConfig, provider: string): string {
+  const key = PROVIDER_TO_LOWERCASE[provider];
+  if (!key) return '';
+  return apiKeys[key as keyof APIKeyConfig] || '';
+}
+
+// ===== API Key 二级页面组件 =====
+function ApiKeyPage({ onBack }: { onBack: () => void }) {
+  const { settings, updateSettings } = useStore();
+  const [localApiKeys, setLocalApiKeys] = useState(settings.apiKeys);
+  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+
+  const updateApiKey = (key: keyof APIKeyConfig, value: string) => {
+    setLocalApiKeys((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSave = () => {
+    updateSettings({ apiKeys: localApiKeys });
+    onBack();
+  };
+
+  const toggleKeyVisibility = (key: string) => {
+    setShowKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const configuredCount = Object.entries(PROVIDER_CONFIG).filter(
+    ([, cfg]) => localApiKeys[cfg.keyField]
+  ).length;
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-900">API Key 配置</h1>
+              <p className="text-gray-500 mt-1">已配置 {configuredCount}/{Object.keys(PROVIDER_CONFIG).length} 个提供商</p>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            {Object.entries(PROVIDER_CONFIG).map(([key, cfg]) => {
+              const hasKey = !!localApiKeys[cfg.keyField];
+              return (
+                <div key={key} className="bg-gray-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-8 h-8 bg-${cfg.color}-100 rounded-lg flex items-center justify-center`}>
+                        <span className={`text-sm font-bold text-${cfg.color}-700`}>{cfg.letter}</span>
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">{cfg.label}</div>
+                      </div>
+                    </div>
+                    {hasKey ? (
+                      <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                        <ShieldCheck className="w-3 h-3" />
+                        已配置
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                        <ShieldAlert className="w-3 h-3" />
+                        未配置
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input
+                        type={showKeys[key] ? 'text' : 'password'}
+                        value={localApiKeys[cfg.keyField]}
+                        onChange={(e) => updateApiKey(cfg.keyField, e.target.value)}
+                        placeholder={cfg.placeholder}
+                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => toggleKeyVisibility(key)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                      >
+                        {showKeys[key] ? '隐藏' : '显示'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={localApiKeys[cfg.urlField]}
+                        onChange={(e) => updateApiKey(cfg.urlField, e.target.value)}
+                        placeholder="API Base URL"
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="p-6 border-t border-gray-100 flex gap-3">
+            <button
+              onClick={handleSave}
+              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+            >
+              保存
+            </button>
+            <button
+              onClick={onBack}
+              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== 主设置页面 =====
 export default function Settings() {
   const { settings, updateSettings, setCurrentPage } = useStore();
   const [localSettings, setLocalSettings] = useState(settings);
+  const [showApiKeyPage, setShowApiKeyPage] = useState(false);
   const [newModel, setNewModel] = useState({ name: '', provider: '', modelId: '' });
-  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  if (showApiKeyPage) {
+    return <ApiKeyPage onBack={() => setShowApiKeyPage(false)} />;
+  }
 
   const handleSave = () => {
+    // 验证：勾选的模型必须有对应的 API Key
+    const enabledModels = localSettings.models.filter((m) => m.isEnabled);
+    for (const model of enabledModels) {
+      const apiKey = getApiKeyForProvider(localSettings.apiKeys, model.provider);
+      if (!apiKey) {
+        setValidationError(`模型「${model.name}」(${model.provider}) 已勾选但未配置 API Key，请先前往 API Key 配置页面填写。`);
+        return;
+      }
+    }
+    setValidationError(null);
     updateSettings(localSettings);
     setCurrentPage('home');
   };
@@ -34,6 +195,25 @@ export default function Settings() {
     });
   };
 
+  const toggleModelEnabled = (id: string) => {
+    setLocalSettings({
+      ...localSettings,
+      models: localSettings.models.map((m) => {
+        if (m.id !== id) return m;
+        const newEnabled = !m.isEnabled;
+        if (newEnabled) {
+          // 勾选时检查 API Key
+          const apiKey = getApiKeyForProvider(localSettings.apiKeys, m.provider);
+          if (!apiKey) {
+            setValidationError(`模型「${m.name}」(${m.provider}) 需要先配置 API Key。`);
+            return m;
+          }
+        }
+        return { ...m, isEnabled: newEnabled };
+      }),
+    });
+  };
+
   const addModel = () => {
     if (!newModel.name || !newModel.provider || !newModel.modelId) return;
     const model = {
@@ -41,6 +221,7 @@ export default function Settings() {
       name: newModel.name,
       provider: newModel.provider,
       modelId: newModel.modelId,
+      isEnabled: false,
       isDefault: false,
     };
     setLocalSettings({
@@ -64,18 +245,12 @@ export default function Settings() {
     });
   };
 
-  const toggleKeyVisibility = (key: string) => {
-    setShowKeys((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const updateApiKey = (key: keyof typeof localSettings.apiKeys, value: string) => {
-    setLocalSettings({
-      ...localSettings,
-      apiKeys: { ...localSettings.apiKeys, [key]: value },
-    });
-  };
-
-  const hasAnyKey = localSettings.apiKeys.openai || localSettings.apiKeys.anthropic || localSettings.apiKeys.google;
+  const enabledCount = localSettings.models.filter((m) => m.isEnabled).length;
+  const configuredProviders = new Set(
+    localSettings.models
+      .filter((m) => m.isEnabled)
+      .map((m) => m.provider)
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -87,378 +262,161 @@ export default function Settings() {
           </div>
 
           <div className="p-6 space-y-8">
-            {/* API Key 配置 */}
+            {/* API Key 入口卡片 */}
             <section>
               <div className="flex items-center gap-2 mb-4">
                 <Key className="w-5 h-5 text-red-600" />
                 <h2 className="text-lg font-semibold text-gray-900">API Key 配置</h2>
               </div>
-              {!hasAnyKey && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-800">
-                    尚未配置任何 API Key。AI 聊天功能需要至少配置一个提供商的 Key 才能正常工作。
+              <button
+                onClick={() => setShowApiKeyPage(true)}
+                className="w-full bg-gray-50 rounded-xl p-4 flex items-center justify-between hover:bg-gray-100 transition-colors border border-gray-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-1">
+                    {Object.entries(PROVIDER_CONFIG).slice(0, 4).map(([key, cfg]) => {
+                      const hasKey = !!localSettings.apiKeys[cfg.keyField];
+                      return (
+                        <div
+                          key={key}
+                          className={`w-7 h-7 rounded-full flex items-center justify-center border-2 border-white ${
+                            hasKey ? 'bg-green-100' : 'bg-gray-200'
+                          }`}
+                        >
+                          <span className={`text-xs font-bold ${hasKey ? 'text-green-700' : 'text-gray-400'}`}>
+                            {cfg.letter}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center border-2 border-white text-xs text-gray-400">
+                      +{Object.keys(PROVIDER_CONFIG).length - 4}
+                    </div>
                   </div>
+                  <div className="text-left">
+                    <div className="font-medium text-gray-900">
+                      管理提供商密钥
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {configuredProviders.size} 个提供商已启用，共 {Object.keys(PROVIDER_CONFIG).length} 个可选
+                    </div>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+            </section>
+
+            {/* 模型管理 - 多选 */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Brain className="w-5 h-5 text-orange-600" />
+                <h2 className="text-lg font-semibold text-gray-900">模型管理</h2>
+                <span className="text-sm text-gray-500">已选 {enabledCount} 个</span>
+              </div>
+              {validationError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  <div className="text-sm text-red-700">{validationError}</div>
+                  <button onClick={() => setValidationError(null)} className="text-red-400 hover:text-red-600 ml-auto shrink-0">关闭</button>
                 </div>
               )}
-              <div className="space-y-4">
-                {/* OpenAI */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-bold text-green-700">O</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">OpenAI</div>
-                        <div className="text-xs text-gray-500">GPT-4o, GPT-4o Mini 等</div>
-                      </div>
-                    </div>
-                    {localSettings.apiKeys.openai && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showKeys.openai ? 'text' : 'password'}
-                        value={localSettings.apiKeys.openai}
-                        onChange={(e) => updateApiKey('openai', e.target.value)}
-                        placeholder="sk-..."
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                      />
-                      <button
-                        onClick={() => toggleKeyVisibility('openai')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <div className="space-y-2">
+                  {localSettings.models.map((model) => {
+                    const apiKey = getApiKeyForProvider(localSettings.apiKeys, model.provider);
+                    const hasKey = !!apiKey;
+                    return (
+                      <div
+                        key={model.id}
+                        className={`flex items-center justify-between rounded-lg p-3 border transition-colors ${
+                          model.isEnabled
+                            ? 'border-blue-200 bg-blue-50/50'
+                            : 'border-gray-200 bg-white'
+                        }`}
                       >
-                        {showKeys.openai ? '隐藏' : '显示'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={localSettings.apiKeys.openaiBaseUrl}
-                        onChange={(e) => updateApiKey('openaiBaseUrl', e.target.value)}
-                        placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      />
-                    </div>
-                  </div>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={model.isEnabled}
+                            onChange={() => toggleModelEnabled(model.id)}
+                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            title={hasKey ? '取消选择' : '需要先配置 API Key'}
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900 flex items-center gap-2">
+                              {model.name}
+                              {!hasKey && (
+                                <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">需配置 Key</span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {model.provider} / {model.modelId}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setDefaultModel(model.id)}
+                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                              model.isDefault
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                            }`}
+                            title="设为默认"
+                          >
+                            默认
+                          </button>
+                          <button
+                            onClick={() => removeModel(model.id)}
+                            className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {/* Anthropic */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-bold text-orange-700">A</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">Anthropic</div>
-                        <div className="text-xs text-gray-500">Claude Sonnet 4 等</div>
-                      </div>
-                    </div>
-                    {localSettings.apiKeys.anthropic && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
-                    )}
+                <div className="border-t border-gray-200 pt-3 space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="显示名称"
+                      value={newModel.name}
+                      onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <select
+                      value={newModel.provider}
+                      onChange={(e) => setNewModel({ ...newModel, provider: e.target.value })}
+                      className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="">提供商</option>
+                      <option value="OpenAI">OpenAI</option>
+                      <option value="Anthropic">Anthropic</option>
+                      <option value="Google">Google</option>
+                      <option value="DeepSeek">DeepSeek</option>
+                      <option value="Qwen">通义千问</option>
+                      <option value="Moonshot">Moonshot</option>
+                      <option value="Zhipu">智谱 AI</option>
+                      <option value="Baidu">百度文心一言</option>
+                    </select>
                   </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showKeys.anthropic ? 'text' : 'password'}
-                        value={localSettings.apiKeys.anthropic}
-                        onChange={(e) => updateApiKey('anthropic', e.target.value)}
-                        placeholder="sk-ant-..."
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                      />
-                      <button
-                        onClick={() => toggleKeyVisibility('anthropic')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showKeys.anthropic ? '隐藏' : '显示'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={localSettings.apiKeys.anthropicBaseUrl}
-                        onChange={(e) => updateApiKey('anthropicBaseUrl', e.target.value)}
-                        placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Google */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-bold text-blue-700">G</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">Google AI</div>
-                        <div className="text-xs text-gray-500">Gemini 2.5 Pro 等</div>
-                      </div>
-                    </div>
-                    {localSettings.apiKeys.google && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showKeys.google ? 'text' : 'password'}
-                        value={localSettings.apiKeys.google}
-                        onChange={(e) => updateApiKey('google', e.target.value)}
-                        placeholder="AIza..."
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                      />
-                      <button
-                        onClick={() => toggleKeyVisibility('google')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showKeys.google ? '隐藏' : '显示'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={localSettings.apiKeys.googleBaseUrl}
-                        onChange={(e) => updateApiKey('googleBaseUrl', e.target.value)}
-                        placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* DeepSeek */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-bold text-indigo-700">D</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">DeepSeek</div>
-                        <div className="text-xs text-gray-500">DeepSeek V3, R1 等</div>
-                      </div>
-                    </div>
-                    {localSettings.apiKeys.deepseek && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showKeys.deepseek ? 'text' : 'password'}
-                        value={localSettings.apiKeys.deepseek}
-                        onChange={(e) => updateApiKey('deepseek', e.target.value)}
-                        placeholder="sk-..."
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                      />
-                      <button
-                        onClick={() => toggleKeyVisibility('deepseek')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showKeys.deepseek ? '隐藏' : '显示'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={localSettings.apiKeys.deepseekBaseUrl}
-                        onChange={(e) => updateApiKey('deepseekBaseUrl', e.target.value)}
-                        placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Qwen */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-bold text-purple-700">Q</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">通义千问</div>
-                        <div className="text-xs text-gray-500">Qwen Max, Plus 等</div>
-                      </div>
-                    </div>
-                    {localSettings.apiKeys.qwen && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showKeys.qwen ? 'text' : 'password'}
-                        value={localSettings.apiKeys.qwen}
-                        onChange={(e) => updateApiKey('qwen', e.target.value)}
-                        placeholder="sk-..."
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                      />
-                      <button
-                        onClick={() => toggleKeyVisibility('qwen')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showKeys.qwen ? '隐藏' : '显示'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={localSettings.apiKeys.qwenBaseUrl}
-                        onChange={(e) => updateApiKey('qwenBaseUrl', e.target.value)}
-                        placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Moonshot */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-bold text-sky-700">M</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">Moonshot</div>
-                        <div className="text-xs text-gray-500">Moonshot V1 等</div>
-                      </div>
-                    </div>
-                    {localSettings.apiKeys.moonshot && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showKeys.moonshot ? 'text' : 'password'}
-                        value={localSettings.apiKeys.moonshot}
-                        onChange={(e) => updateApiKey('moonshot', e.target.value)}
-                        placeholder="sk-..."
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                      />
-                      <button
-                        onClick={() => toggleKeyVisibility('moonshot')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showKeys.moonshot ? '隐藏' : '显示'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={localSettings.apiKeys.moonshotBaseUrl}
-                        onChange={(e) => updateApiKey('moonshotBaseUrl', e.target.value)}
-                        placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Zhipu */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-bold text-teal-700">Z</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">智谱 AI</div>
-                        <div className="text-xs text-gray-500">GLM-4 等</div>
-                      </div>
-                    </div>
-                    {localSettings.apiKeys.zhipu && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showKeys.zhipu ? 'text' : 'password'}
-                        value={localSettings.apiKeys.zhipu}
-                        onChange={(e) => updateApiKey('zhipu', e.target.value)}
-                        placeholder="API Key"
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                      />
-                      <button
-                        onClick={() => toggleKeyVisibility('zhipu')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showKeys.zhipu ? '隐藏' : '显示'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={localSettings.apiKeys.zhipuBaseUrl}
-                        onChange={(e) => updateApiKey('zhipuBaseUrl', e.target.value)}
-                        placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Baidu */}
-                <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-bold text-red-700">B</span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">百度文心一言</div>
-                        <div className="text-xs text-gray-500">ERNIE 4.0 等</div>
-                      </div>
-                    </div>
-                    {localSettings.apiKeys.baidu && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">已配置</span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <input
-                        type={showKeys.baidu ? 'text' : 'password'}
-                        value={localSettings.apiKeys.baidu}
-                        onChange={(e) => updateApiKey('baidu', e.target.value)}
-                        placeholder="API Key"
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                      />
-                      <button
-                        onClick={() => toggleKeyVisibility('baidu')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showKeys.baidu ? '隐藏' : '显示'}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={localSettings.apiKeys.baiduBaseUrl}
-                        onChange={(e) => updateApiKey('baiduBaseUrl', e.target.value)}
-                        placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      />
-                    </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="模型 ID（如 gpt-4o, deepseek-chat）"
+                      value={newModel.modelId}
+                      onChange={(e) => setNewModel({ ...newModel, modelId: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <button
+                      onClick={addModel}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      添加
+                    </button>
                   </div>
                 </div>
               </div>
@@ -593,94 +551,6 @@ export default function Settings() {
                     <span className="text-gray-600">分钟</span>
                   </div>
                 )}
-              </div>
-            </section>
-
-            {/* 模型管理 */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Brain className="w-5 h-5 text-orange-600" />
-                <h2 className="text-lg font-semibold text-gray-900">模型管理</h2>
-              </div>
-              <div className="bg-gray-50 rounded-xl p-4 space-y-4">
-                <div className="space-y-2">
-                  {localSettings.models.map((model) => (
-                    <div
-                      key={model.id}
-                      className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200"
-                    >
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setDefaultModel(model.id)}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                            model.isDefault
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-200 text-gray-400 hover:bg-gray-300'
-                          }`}
-                          title="设为默认"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <div>
-                          <div className="font-medium text-gray-900">{model.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {model.provider} / {model.modelId}
-                          </div>
-                        </div>
-                      </div>
-                      {!model.isDefault && (
-                        <button
-                          onClick={() => removeModel(model.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="显示名称"
-                      value={newModel.name}
-                      onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                    <select
-                      value={newModel.provider}
-                      onChange={(e) => setNewModel({ ...newModel, provider: e.target.value })}
-                      className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    >
-                      <option value="">提供商</option>
-                      <option value="OpenAI">OpenAI</option>
-                      <option value="Anthropic">Anthropic</option>
-                      <option value="Google">Google</option>
-                      <option value="DeepSeek">DeepSeek</option>
-                      <option value="Qwen">通义千问</option>
-                      <option value="Moonshot">Moonshot</option>
-                      <option value="Zhipu">智谱 AI</option>
-                      <option value="Baidu">百度文心一言</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="模型 ID（如 gpt-4o, claude-sonnet-4-20250514）"
-                      value={newModel.modelId}
-                      onChange={(e) => setNewModel({ ...newModel, modelId: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                    <button
-                      onClick={addModel}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
-                    >
-                      <Plus className="w-4 h-4" />
-                      添加
-                    </button>
-                  </div>
-                </div>
               </div>
             </section>
           </div>

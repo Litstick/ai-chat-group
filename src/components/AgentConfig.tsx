@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import type { AIAgent } from '../types';
-import { User, Wrench, ChevronDown, ChevronUp, Save, ArrowLeft } from 'lucide-react';
+import { User, Wrench, ChevronDown, ChevronUp, Save, ArrowLeft, Brain } from 'lucide-react';
 
 export default function AgentConfig() {
-  const { agents, updateAgents, skills, setCurrentPage } = useStore();
+  const { agents, updateAgents, skills, settings, setCurrentPage } = useStore();
   const [localAgents, setLocalAgents] = useState<AIAgent[]>(agents);
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
+
+  const enabledModels = settings.models.filter((m) => m.isEnabled);
 
   const toggleAgent = (id: string) => {
     const activeCount = localAgents.filter((a) => a.isActive).length;
@@ -45,6 +47,14 @@ export default function AgentConfig() {
       alert('请至少选择 2 个 AI 参与群聊');
       return;
     }
+    // 验证每个激活的 AI 都有有效的模型
+    for (const agent of activeAgents) {
+      const model = enabledModels.find((m) => m.id === agent.model);
+      if (!model) {
+        alert(`AI「${agent.name}」选择的模型未启用或不存在，请在设置中启用对应模型。`);
+        return;
+      }
+    }
     updateAgents(localAgents);
     setCurrentPage('home');
   };
@@ -72,92 +82,128 @@ export default function AgentConfig() {
             </div>
           </div>
 
+          {enabledModels.length === 0 && (
+            <div className="mx-6 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+              <span className="text-amber-600 text-sm">请先在「设置」中启用至少一个模型，然后再配置 AI 角色。</span>
+            </div>
+          )}
+
           <div className="p-6 space-y-4">
-            {localAgents.map((agent) => (
-              <div
-                key={agent.id}
-                className={`border rounded-xl overflow-hidden transition-all ${
-                  agent.isActive ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200 bg-white'
-                }`}
-              >
+            {localAgents.map((agent) => {
+              const currentModel = enabledModels.find((m) => m.id === agent.model);
+              return (
                 <div
-                  className="flex items-center gap-4 p-4 cursor-pointer"
-                  onClick={() => setExpandedAgent(expandedAgent === agent.id ? null : agent.id)}
+                  key={agent.id}
+                  className={`border rounded-xl overflow-hidden transition-all ${
+                    agent.isActive ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200 bg-white'
+                  }`}
                 >
-                  <img
-                    src={agent.avatar}
-                    alt={agent.name}
-                    className="w-12 h-12 rounded-full bg-gray-100"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-900">{agent.name}</span>
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
-                        {agent.role}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-500 mt-0.5">{agent.model}</div>
-                  </div>
-                  <label
-                    className="relative inline-flex items-center cursor-pointer"
-                    onClick={(e) => e.stopPropagation()}
+                  <div
+                    className="flex items-center gap-4 p-4 cursor-pointer"
+                    onClick={() => setExpandedAgent(expandedAgent === agent.id ? null : agent.id)}
                   >
-                    <input
-                      type="checkbox"
-                      checked={agent.isActive}
-                      onChange={() => toggleAgent(agent.id)}
-                      className="sr-only peer"
+                    <img
+                      src={agent.avatar}
+                      alt={agent.name}
+                      className="w-12 h-12 rounded-full bg-gray-100"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                  {expandedAgent === agent.id ? (
-                    <ChevronUp className="w-5 h-5 text-gray-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-400" />
-                  )}
-                </div>
-
-                {expandedAgent === agent.id && agent.isActive && (
-                  <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
-                    <div>
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                        <User className="w-4 h-4" />
-                        角色描述
-                      </label>
-                      <textarea
-                        value={agent.description}
-                        onChange={(e) => updateAgentField(agent.id, 'description', e.target.value)}
-                        placeholder="描述这个 AI 的角色和专长..."
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                        <Wrench className="w-4 h-4" />
-                        Skill 配置
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {skills.map((skill) => (
-                          <button
-                            key={skill.id}
-                            onClick={() => toggleSkill(agent.id, skill.id)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                              agent.skills.includes(skill.id)
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            {skill.name}
-                          </button>
-                        ))}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900">{agent.name}</span>
+                        <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                          {agent.role}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-500 mt-0.5">
+                        {currentModel ? currentModel.name : '未选择模型'}
+                        {currentModel && (
+                          <span className="text-gray-400"> ({currentModel.provider})</span>
+                        )}
                       </div>
                     </div>
+                    <label
+                      className="relative inline-flex items-center cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={agent.isActive}
+                        onChange={() => toggleAgent(agent.id)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                    {expandedAgent === agent.id ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {expandedAgent === agent.id && agent.isActive && (
+                    <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
+                      {/* 模型选择 */}
+                      <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                          <Brain className="w-4 h-4" />
+                          模型选择
+                        </label>
+                        <select
+                          value={agent.model}
+                          onChange={(e) => updateAgentField(agent.id, 'model', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        >
+                          <option value="">请选择模型</option>
+                          {enabledModels.map((model) => (
+                            <option key={model.id} value={model.id}>
+                              {model.name} ({model.provider})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* 角色描述 */}
+                      <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                          <User className="w-4 h-4" />
+                          角色描述
+                        </label>
+                        <textarea
+                          value={agent.description}
+                          onChange={(e) => updateAgentField(agent.id, 'description', e.target.value)}
+                          placeholder="描述这个 AI 的角色和专长..."
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                      </div>
+
+                      {/* Skill 配置 */}
+                      <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                          <Wrench className="w-4 h-4" />
+                          Skill 配置
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {skills.map((skill) => (
+                            <button
+                              key={skill.id}
+                              onClick={() => toggleSkill(agent.id, skill.id)}
+                              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                agent.skills.includes(skill.id)
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              {skill.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="p-6 border-t border-gray-100">

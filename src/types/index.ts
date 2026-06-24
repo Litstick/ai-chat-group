@@ -71,6 +71,7 @@ export interface AIModel {
   name: string;
   provider: string;
   modelId: string;
+  isEnabled: boolean;
   isDefault: boolean;
 }
 
