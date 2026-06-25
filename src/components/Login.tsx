@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { userStorage } from '../utils/storage';
-import { LogIn, UserPlus, MessageCircle } from 'lucide-react';
+import { LogIn, UserPlus, MessageCircle, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const { login, setCurrentPage } = useStore();
@@ -66,51 +66,53 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen gradient-bg flex items-center justify-center px-4">
+      <div className="w-full max-w-md fade-in">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <MessageCircle className="w-8 h-8 text-white" />
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 gradient-bg-blue rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-500/25">
+            <MessageCircle className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">AI 聊天群</h1>
-          <p className="text-gray-500 mt-1">与多个 AI 一起协作讨论</p>
+          <h1 className="text-3xl font-bold text-white mb-2">AI 聊天群</h1>
+          <p className="text-white/70 text-base">与多个 AI 一起协作讨论，开启智能对话新体验</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab('login')}
-              className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                activeTab === 'login'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <LogIn className="w-4 h-4" />
-              登录
-            </button>
-            <button
-              onClick={() => setActiveTab('register')}
-              className={`flex-1 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                activeTab === 'register'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <UserPlus className="w-4 h-4" />
-              注册
-            </button>
+        <div className="glass-card rounded-3xl slide-up">
+          {/* Tabs - 药丸风格 */}
+          <div className="p-2">
+            <div className="flex bg-gray-100/80 rounded-2xl p-1">
+              <button
+                onClick={() => setActiveTab('login')}
+                className={`flex-1 py-3 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 ${
+                  activeTab === 'login'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <LogIn className="w-4 h-4" />
+                登录
+              </button>
+              <button
+                onClick={() => setActiveTab('register')}
+                className={`flex-1 py-3 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-all duration-300 ${
+                  activeTab === 'register'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <UserPlus className="w-4 h-4" />
+                注册
+              </button>
+            </div>
           </div>
 
-          <div className="p-6">
+          <div className="px-8 pb-8 pt-2">
             {activeTab === 'login' ? (
               /* 登录表单 */
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     用户名
                   </label>
                   <input
@@ -119,11 +121,11 @@ export default function Login() {
                     onChange={(e) => setLoginUsername(e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, handleLogin)}
                     placeholder="请输入用户名"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="input-modern"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     密码
                   </label>
                   <input
@@ -132,17 +134,18 @@ export default function Login() {
                     onChange={(e) => setLoginPassword(e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, handleLogin)}
                     placeholder="请输入密码"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="input-modern"
                   />
                 </div>
                 {loginError && (
-                  <div className="text-sm text-red-500 bg-red-50 px-4 py-2 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50/80 backdrop-blur-sm px-4 py-3 rounded-xl">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     {loginError}
                   </div>
                 )}
                 <button
                   onClick={handleLogin}
-                  className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  className="btn-primary w-full py-3.5 flex items-center justify-center gap-2"
                 >
                   <LogIn className="w-4 h-4" />
                   登录
@@ -150,9 +153,9 @@ export default function Login() {
               </div>
             ) : (
               /* 注册表单 */
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     用户名
                   </label>
                   <input
@@ -160,11 +163,11 @@ export default function Login() {
                     value={regUsername}
                     onChange={(e) => setRegUsername(e.target.value)}
                     placeholder="请输入用户名"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="input-modern"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     密码
                   </label>
                   <input
@@ -172,11 +175,11 @@ export default function Login() {
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
                     placeholder="请输入密码（至少 6 位）"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="input-modern"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     确认密码
                   </label>
                   <input
@@ -185,11 +188,11 @@ export default function Login() {
                     onChange={(e) => setRegConfirmPassword(e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, handleRegister)}
                     placeholder="请再次输入密码"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="input-modern"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     昵称 <span className="text-gray-400">（选填）</span>
                   </label>
                   <input
@@ -198,17 +201,18 @@ export default function Login() {
                     onChange={(e) => setRegNickname(e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, handleRegister)}
                     placeholder="请输入昵称"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="input-modern"
                   />
                 </div>
                 {regError && (
-                  <div className="text-sm text-red-500 bg-red-50 px-4 py-2 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50/80 backdrop-blur-sm px-4 py-3 rounded-xl">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     {regError}
                   </div>
                 )}
                 <button
                   onClick={handleRegister}
-                  className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  className="btn-primary w-full py-3.5 flex items-center justify-center gap-2"
                 >
                   <UserPlus className="w-4 h-4" />
                   注册

@@ -73,31 +73,31 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      {/* Header - gradient-bg-blue with white text, user avatar circle, settings gear */}
+      <div className="gradient-bg-blue">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">AI 聊天群</h1>
-              <p className="text-gray-500 mt-1">与多个 AI 一起协作讨论</p>
+              <h1 className="text-2xl font-bold text-white">AI 聊天群</h1>
+              <p className="text-blue-100 mt-1 text-sm">与多个 AI 一起协作讨论</p>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setCurrentPage('profile')}
-                className="flex items-center gap-2 p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-full hover:bg-white/30 transition-all"
               >
                 <img
                   src={currentUser?.avatar}
                   alt=""
-                  className="w-6 h-6 rounded-full"
+                  className="w-7 h-7 rounded-full ring-2 ring-white/50"
                 />
-                <span className="text-sm text-gray-700 max-w-[80px] truncate">{currentUser?.nickname}</span>
+                <span className="text-sm text-white max-w-[80px] truncate font-medium">{currentUser?.nickname}</span>
               </button>
               <button
                 onClick={() => setCurrentPage('settings')}
-                className="p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                className="p-2.5 bg-white/20 rounded-full hover:bg-white/30 transition-all"
               >
-                <Settings className="w-5 h-5 text-gray-600" />
+                <Settings className="w-5 h-5 text-white" />
               </button>
             </div>
           </div>
@@ -105,51 +105,61 @@ export default function Home() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Quick Actions */}
+        {/* Quick Actions - bigger cards with gradient icon circles, hover lift */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
             onClick={() => setShowNewChat(true)}
-            className="bg-blue-600 text-white p-4 rounded-2xl hover:bg-blue-700 transition-colors text-left"
+            className="section-card p-5 text-left hover:shadow-lg hover:-translate-y-0.5 transition-all group"
           >
-            <Plus className="w-6 h-6 mb-2" />
-            <div className="font-semibold">新建聊天</div>
-            <div className="text-sm text-blue-200">开始新话题</div>
+            <div className="gradient-bg-blue w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-md">
+              <Plus className="w-6 h-6 text-white" />
+            </div>
+            <div className="font-semibold text-gray-900">新建聊天</div>
+            <div className="text-sm text-gray-400 mt-0.5">开始新话题</div>
           </button>
           <button
             onClick={() => setCurrentPage('agents')}
-            className="bg-white border border-gray-200 p-4 rounded-2xl hover:border-blue-300 transition-colors text-left"
+            className="section-card p-5 text-left hover:shadow-lg hover:-translate-y-0.5 transition-all group"
           >
-            <Users className="w-6 h-6 mb-2 text-green-600" />
+            <div className="gradient-bg-green w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-md">
+              <Users className="w-6 h-6 text-white" />
+            </div>
             <div className="font-semibold text-gray-900">AI 配置</div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-400 mt-0.5">
               {activeAgents.length} 个 AI 已激活
             </div>
           </button>
           <button
             onClick={() => setCurrentPage('history')}
-            className="bg-white border border-gray-200 p-4 rounded-2xl hover:border-blue-300 transition-colors text-left"
+            className="section-card p-5 text-left hover:shadow-lg hover:-translate-y-0.5 transition-all group"
           >
-            <History className="w-6 h-6 mb-2 text-purple-600" />
+            <div className="gradient-bg-purple w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-md">
+              <History className="w-6 h-6 text-white" />
+            </div>
             <div className="font-semibold text-gray-900">历史记录</div>
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-400 mt-0.5">
               {sessions.length} 个会话
             </div>
           </button>
           <button
             onClick={() => setCurrentPage('settings')}
-            className="bg-white border border-gray-200 p-4 rounded-2xl hover:border-blue-300 transition-colors text-left"
+            className="section-card p-5 text-left hover:shadow-lg hover:-translate-y-0.5 transition-all group"
           >
-            <Settings className="w-6 h-6 mb-2 text-orange-600" />
+            <div className="gradient-bg-orange w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-md">
+              <Settings className="w-6 h-6 text-white" />
+            </div>
             <div className="font-semibold text-gray-900">设置</div>
-            <div className="text-sm text-gray-500">群聊参数</div>
+            <div className="text-sm text-gray-400 mt-0.5">群聊参数</div>
           </button>
         </div>
 
-        {/* New Chat Modal */}
+        {/* New Chat Modal - slide-up animation, input-modern, avatar chips, btn-primary */}
         {showNewChat && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="glass-card rounded-2xl p-6 slide-up">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-blue-600" />
+              <div className="gradient-bg-purple w-8 h-8 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
               新建群聊
             </h2>
             <div className="space-y-4">
@@ -162,17 +172,28 @@ export default function Home() {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="例如：开发一款任务管理软件、调研 AI 市场分析报告..."
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input-modern w-full px-4 py-3 text-sm"
                 />
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Users className="w-4 h-4" />
                 将邀请 {activeAgents.length} 个 AI 参与：
-                {activeAgents.map((a) => a.name).join('、')}
+              </div>
+              {/* Participant avatar chips */}
+              <div className="flex flex-wrap gap-2">
+                {activeAgents.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 rounded-full"
+                  >
+                    <img src={a.avatar} alt={a.name} className="w-5 h-5 rounded-full" />
+                    <span className="text-sm text-blue-700 font-medium">{a.name}</span>
+                  </div>
+                ))}
               </div>
               {settings.chatDuration.enabled && (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Clock className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-sm text-gray-500 bg-orange-50 px-3 py-2 rounded-xl">
+                  <Clock className="w-4 h-4 text-orange-500" />
                   聊天将在 {settings.chatDuration.minutes} 分钟后自动终止
                 </div>
               )}
@@ -180,13 +201,13 @@ export default function Home() {
                 <button
                   onClick={handleStartChat}
                   disabled={!topic.trim()}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="btn-primary flex-1 py-3 text-sm"
                 >
                   开始聊天
                 </button>
                 <button
                   onClick={() => setShowNewChat(false)}
-                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all text-sm"
                 >
                   取消
                 </button>
@@ -195,11 +216,13 @@ export default function Home() {
           </div>
         )}
 
-        {/* Active Sessions */}
+        {/* Active Sessions - section-card with left accent border, participant avatars */}
         {sessions.filter((s) => s.isActive).length > 0 && (
-          <div>
+          <div className="fade-in">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <MessageCircle className="w-5 h-5 text-green-600" />
+              <div className="gradient-bg-green w-7 h-7 rounded-lg flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 text-white" />
+              </div>
               进行中的聊天
             </h2>
             <div className="space-y-3">
@@ -209,29 +232,40 @@ export default function Home() {
                   <div
                     key={session.id}
                     onClick={() => handleContinueChat(session)}
-                    className="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
+                    className="section-card border-l-4 border-blue-500 p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{session.topic}</h3>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        {/* Participant avatars in a row */}
+                        <div className="flex items-center gap-1 mt-2">
+                          {session.participants.slice(0, 5).map((p, idx) => (
+                            <img
+                              key={p.id}
+                              src={p.avatar}
+                              alt={p.name}
+                              className="w-6 h-6 rounded-full ring-2 ring-white -ml-1 first:ml-0"
+                              style={{ zIndex: 5 - idx }}
+                            />
+                          ))}
+                          {session.participants.length > 5 && (
+                            <span className="text-xs text-gray-400 ml-1">+{session.participants.length - 5}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
                           <span className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {session.participants.length} 个 AI
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageCircle className="w-4 h-4" />
+                            <MessageCircle className="w-3.5 h-3.5" />
                             {session.messages.length} 条消息
                           </span>
                           <span>{formatDate(session.startTime)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-green-600 text-sm">
-                          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span className="flex items-center gap-1 text-green-600 text-xs font-medium bg-green-50 px-2 py-1 rounded-full">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full pulse-dot"></span>
                           进行中
                         </span>
-                        <ArrowRight className="w-5 h-5 text-gray-400" />
+                        <ArrowRight className="w-5 h-5 text-gray-300" />
                       </div>
                     </div>
                   </div>
@@ -240,11 +274,13 @@ export default function Home() {
           </div>
         )}
 
-        {/* Recent History */}
+        {/* Recent History - section-card with left accent border, cleaner meta */}
         {sessions.filter((s) => !s.isActive).length > 0 && (
-          <div>
+          <div className="fade-in">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <History className="w-5 h-5 text-purple-600" />
+              <div className="gradient-bg-purple w-7 h-7 rounded-lg flex items-center justify-center">
+                <History className="w-4 h-4 text-white" />
+              </div>
               最近历史
             </h2>
             <div className="space-y-3">
@@ -255,29 +291,40 @@ export default function Home() {
                   <div
                     key={session.id}
                     onClick={() => handleContinueChat(session)}
-                    className="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
+                    className="section-card border-l-4 border-purple-400 p-4 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{session.topic}</h3>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        {/* Participant avatars in a row */}
+                        <div className="flex items-center gap-1 mt-2">
+                          {session.participants.slice(0, 5).map((p, idx) => (
+                            <img
+                              key={p.id}
+                              src={p.avatar}
+                              alt={p.name}
+                              className="w-6 h-6 rounded-full ring-2 ring-white -ml-1 first:ml-0"
+                              style={{ zIndex: 5 - idx }}
+                            />
+                          ))}
+                          {session.participants.length > 5 && (
+                            <span className="text-xs text-gray-400 ml-1">+{session.participants.length - 5}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
                           <span className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {session.participants.length} 个 AI
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageCircle className="w-4 h-4" />
+                            <MessageCircle className="w-3.5 h-3.5" />
                             {session.messages.length} 条消息
                           </span>
                           <span>{formatDate(session.startTime)}</span>
                         </div>
                       </div>
-                      <ArrowRight className="w-5 h-5 text-gray-400" />
+                      <ArrowRight className="w-5 h-5 text-gray-300" />
                     </div>
                     {session.summary && (
                       <div className="mt-3 pt-3 border-t border-gray-100">
-                        <div className="flex items-center gap-1 text-sm text-purple-600">
-                          <Sparkles className="w-4 h-4" />
+                        <div className="flex items-center gap-1 text-sm text-purple-600 bg-purple-50 px-2 py-1 rounded-full w-fit">
+                          <Sparkles className="w-3.5 h-3.5" />
                           已生成总结
                         </div>
                       </div>
@@ -288,7 +335,7 @@ export default function Home() {
             {sessions.filter((s) => !s.isActive).length > 5 && (
               <button
                 onClick={() => setCurrentPage('history')}
-                className="w-full mt-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="w-full mt-3 py-2.5 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all font-medium"
               >
                 查看全部历史
               </button>
@@ -296,14 +343,16 @@ export default function Home() {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty State - bigger illustration area with gradient icon, warmer text */}
         {sessions.length === 0 && !showNewChat && (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MessageCircle className="w-10 h-10 text-blue-500" />
+          <div className="text-center py-16 fade-in">
+            <div className="w-24 h-24 gradient-bg-blue rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <MessageCircle className="w-12 h-12 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">还没有聊天</h3>
-            <p className="text-gray-500 mt-1">点击上方「新建聊天」开始你的第一个 AI 群聊</p>
+            <h3 className="text-xl font-bold text-gray-800">还没有聊天</h3>
+            <p className="text-gray-500 mt-2 max-w-sm mx-auto leading-relaxed">
+              点击上方「新建聊天」开始你的第一个 AI 群聊，让多个 AI 为你出谋划策
+            </p>
           </div>
         )}
       </div>
