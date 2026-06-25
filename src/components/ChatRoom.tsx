@@ -78,8 +78,12 @@ export default function ChatRoom() {
       aiQueueRef.current = true;
 
       try {
+        // 从 store 获取最新的 session（避免闭包过期）
+        const latestSession = useStore.getState().currentSession || currentSession;
+        if (!latestSession.isActive) return;
+
         // 随机选一个 AI 来发言
-        const participants = currentSession.participants;
+        const participants = latestSession.participants;
         const agent = participants[Math.floor(Math.random() * participants.length)];
         const model = findModelForAgent(agent);
         if (!model) {
@@ -100,12 +104,12 @@ export default function ChatRoom() {
           agent,
           model,
           settings.apiKeys,
-          currentSession.topic,
-          currentSession.messages,
+          latestSession.topic,
+          latestSession.messages,
           triggerMessage
         );
 
-        if (!currentSession.isActive) return;
+        if (!latestSession.isActive) return;
 
         const message: ChatMessage = {
           id: `msg-${Date.now()}`,
@@ -118,7 +122,7 @@ export default function ChatRoom() {
           isAI: true,
         };
 
-        addMessage(currentSession.id, message);
+        addMessage(latestSession.id, message);
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'AI 调用失败';
         setError(msg);
@@ -191,15 +195,19 @@ export default function ChatRoom() {
   const handleSummarize = async () => {
     if (!currentSession) return;
 
-    const defaultModel = settings.models.find((m) => m.isDefault);
-    if (!defaultModel) {
-      setError('没有可用的默认模型来生成总结');
+    // 从已启用且有 API Key 的模型中选第一个，优先选默认模型
+    const enabledModels = settings.models.filter((m) => m.isEnabled);
+    let summaryModel = enabledModels.find((m) => m.isDefault);
+    if (!summaryModel) summaryModel = enabledModels[0];
+
+    if (!summaryModel) {
+      setError('没有可用的模型来生成总结，请在设置中启用至少一个模型');
       return;
     }
 
-    const apiKey = getApiKeyForProvider(defaultModel.provider);
+    const apiKey = getApiKeyForProvider(summaryModel.provider);
     if (!apiKey) {
-      setError('API Key 未配置，无法生成总结');
+      setError(`${summaryModel.provider} 的 API Key 未配置，无法生成总结`);
       return;
     }
 
@@ -208,7 +216,7 @@ export default function ChatRoom() {
 
     try {
       const summary = await callAIForSummary(
-        defaultModel,
+        summaryModel,
         settings.apiKeys,
         currentSession.topic,
         currentSession.messages
