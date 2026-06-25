@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import type { AIAgent } from '../types';
 import { User, Wrench, ChevronDown, ChevronUp, Save, ArrowLeft, Brain } from 'lucide-react';
@@ -7,6 +7,13 @@ export default function AgentConfig() {
   const { agents, updateAgents, skills, settings, setCurrentPage } = useStore();
   const [localAgents, setLocalAgents] = useState<AIAgent[]>(agents);
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
+
+  // 同步 store 中的 agents 到本地（initApp 异步加载后会更新 store）
+  useEffect(() => {
+    if (agents.length > 0) {
+      setLocalAgents(agents);
+    }
+  }, [agents]);
 
   const enabledModels = settings.models.filter((m) => m.isEnabled);
 
