@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import {
   Clock,
@@ -7,13 +7,11 @@ import {
   Brain,
   Plus,
   Trash2,
-  Check,
   Key,
   Globe,
   AlertTriangle,
   ChevronRight,
   ArrowLeft,
-  Save,
   ShieldCheck,
   ShieldAlert,
 } from 'lucide-react';
@@ -43,7 +41,7 @@ function getApiKeyForProvider(apiKeys: APIKeyConfig, provider: string): string {
   return apiKeys[key as keyof APIKeyConfig] || '';
 }
 
-// ===== API Key 二级页面组件 =====
+// ===== API Key 二级页面 =====
 function ApiKeyPage({ onBack }: { onBack: () => void }) {
   const { settings, updateSettings } = useStore();
   const [localApiKeys, setLocalApiKeys] = useState(settings.apiKeys);
@@ -55,7 +53,7 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
 
   const handleSave = () => {
     updateSettings({ apiKeys: localApiKeys });
-    onBack(); // 返回时 Settings 组件会用 store 中的最新值
+    onBack();
   };
 
   const toggleKeyVisibility = (key: string) => {
@@ -67,16 +65,16 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
+    <div className="min-h-screen bg-[#f0f2f5] p-4">
+      <div className="max-w-2xl mx-auto slide-up">
+        <div className="section-card overflow-hidden">
+          <div className="gradient-bg-blue p-6 flex items-center gap-3">
+            <button onClick={onBack} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors">
+              <ArrowLeft className="w-5 h-5 text-white" />
             </button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">API Key 配置</h1>
-              <p className="text-gray-500 mt-1">已配置 {configuredCount}/{Object.keys(PROVIDER_CONFIG).length} 个提供商</p>
+              <h1 className="text-xl font-bold text-white">API Key 配置</h1>
+              <p className="text-white/70 text-sm mt-0.5">已配置 {configuredCount}/{Object.keys(PROVIDER_CONFIG).length} 个提供商</p>
             </div>
           </div>
 
@@ -84,23 +82,21 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
             {Object.entries(PROVIDER_CONFIG).map(([key, cfg]) => {
               const hasKey = !!localApiKeys[cfg.keyField];
               return (
-                <div key={key} className="bg-gray-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 bg-${cfg.color}-100 rounded-lg flex items-center justify-center`}>
-                        <span className={`text-sm font-bold text-${cfg.color}-700`}>{cfg.letter}</span>
+                <div key={key} className={`rounded-xl p-4 border transition-colors ${hasKey ? 'bg-green-50/50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 gradient-bg-blue rounded-xl flex items-center justify-center shadow-sm">
+                        <span className="text-sm font-bold text-white">{cfg.letter}</span>
                       </div>
-                      <div>
-                        <div className="font-medium text-gray-900">{cfg.label}</div>
-                      </div>
+                      <span className="font-semibold text-gray-900">{cfg.label}</span>
                     </div>
                     {hasKey ? (
-                      <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2.5 py-1 rounded-full font-medium">
                         <ShieldCheck className="w-3 h-3" />
                         已配置
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
                         <ShieldAlert className="w-3 h-3" />
                         未配置
                       </span>
@@ -113,23 +109,23 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
                         value={localApiKeys[cfg.keyField]}
                         onChange={(e) => updateApiKey(cfg.keyField, e.target.value)}
                         placeholder={cfg.placeholder}
-                        className="w-full px-3 py-2 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
+                        className="input-modern w-full px-3 py-2.5 pr-12 text-sm font-mono"
                       />
                       <button
                         onClick={() => toggleKeyVisibility(key)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-medium"
                       >
                         {showKeys[key] ? '隐藏' : '显示'}
                       </button>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-400" />
+                      <Globe className="w-4 h-4 text-gray-400 shrink-0" />
                       <input
                         type="text"
                         value={localApiKeys[cfg.urlField]}
                         onChange={(e) => updateApiKey(cfg.urlField, e.target.value)}
                         placeholder="API Base URL"
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="input-modern flex-1 px-3 py-2.5 text-sm"
                       />
                     </div>
                   </div>
@@ -139,18 +135,201 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
           </div>
 
           <div className="p-6 border-t border-gray-100 flex gap-3">
-            <button
-              onClick={handleSave}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-            >
-              保存
+            <button onClick={handleSave} className="flex-1 py-3 btn-primary">保存</button>
+            <button onClick={onBack} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== 模型管理二级页面 =====
+function ModelPage({ onBack }: { onBack: () => void }) {
+  const { settings, updateSettings } = useStore();
+  const [localModels, setLocalModels] = useState(settings.models);
+  const [newModel, setNewModel] = useState({ name: '', provider: '', modelId: '' });
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const toggleModelEnabled = (id: string) => {
+    setValidationError(null);
+    setLocalModels((prev) =>
+      prev.map((m) => {
+        if (m.id !== id) return m;
+        const newEnabled = !m.isEnabled;
+        if (newEnabled) {
+          const apiKey = getApiKeyForProvider(settings.apiKeys, m.provider);
+          if (!apiKey) {
+            setValidationError(`模型「${m.name}」(${m.provider}) 需要先配置 API Key，请返回设置页面配置。`);
+            return m;
+          }
+        }
+        return { ...m, isEnabled: newEnabled };
+      })
+    );
+  };
+
+  const setDefaultModel = (id: string) => {
+    setLocalModels((prev) => prev.map((m) => ({ ...m, isDefault: m.id === id })));
+  };
+
+  const addModel = () => {
+    if (!newModel.name || !newModel.provider || !newModel.modelId) return;
+    setLocalModels((prev) => [
+      ...prev,
+      { id: `model-${Date.now()}`, name: newModel.name, provider: newModel.provider, modelId: newModel.modelId, isEnabled: false, isDefault: false },
+    ]);
+    setNewModel({ name: '', provider: '', modelId: '' });
+  };
+
+  const removeModel = (id: string) => {
+    setLocalModels((prev) => prev.filter((m) => m.id !== id));
+  };
+
+  const handleSave = () => {
+    const enabledModels = localModels.filter((m) => m.isEnabled);
+    for (const model of enabledModels) {
+      const apiKey = getApiKeyForProvider(settings.apiKeys, model.provider);
+      if (!apiKey) {
+        setValidationError(`模型「${model.name}」(${model.provider}) 已勾选但未配置 API Key，请返回设置页面配置。`);
+        return;
+      }
+    }
+    setValidationError(null);
+    updateSettings({ models: localModels });
+    onBack();
+  };
+
+  const enabledCount = localModels.filter((m) => m.isEnabled).length;
+
+  return (
+    <div className="min-h-screen bg-[#f0f2f5] p-4">
+      <div className="max-w-2xl mx-auto slide-up">
+        <div className="section-card overflow-hidden">
+          <div className="gradient-bg-orange p-6 flex items-center gap-3">
+            <button onClick={onBack} className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors">
+              <ArrowLeft className="w-5 h-5 text-white" />
             </button>
-            <button
-              onClick={onBack}
-              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-            >
-              取消
-            </button>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-white">模型管理</h1>
+              <p className="text-white/70 text-sm mt-0.5">已启用 {enabledCount} 个模型</p>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            {validationError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                <div className="text-sm text-red-700 flex-1">{validationError}</div>
+                <button onClick={() => setValidationError(null)} className="text-red-400 hover:text-red-600 shrink-0 text-sm">关闭</button>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {localModels.map((model) => {
+                const apiKey = getApiKeyForProvider(settings.apiKeys, model.provider);
+                const hasKey = !!apiKey;
+                return (
+                  <div
+                    key={model.id}
+                    className={`flex items-center justify-between rounded-xl p-4 border-2 transition-all ${
+                      model.isEnabled
+                        ? 'border-blue-400 bg-blue-50/50 shadow-sm'
+                        : hasKey
+                          ? 'border-gray-200 bg-white hover:border-gray-300'
+                          : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={model.isEnabled}
+                        onChange={() => toggleModelEnabled(model.id)}
+                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div>
+                        <div className="font-medium text-gray-900 flex items-center gap-2">
+                          {model.name}
+                          {!hasKey && (
+                            <span className="text-xs text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded font-medium">需配置 Key</span>
+                          )}
+                          {model.isDefault && (
+                            <span className="text-xs text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded font-medium">默认</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">{model.provider} / {model.modelId}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setDefaultModel(model.id)}
+                        className={`px-2.5 py-1 text-xs rounded-lg transition-colors font-medium ${
+                          model.isDefault
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        默认
+                      </button>
+                      <button
+                        onClick={() => removeModel(model.id)}
+                        className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t-2 border-dashed border-gray-200 pt-4">
+              <p className="text-sm font-medium text-gray-600 mb-3">添加自定义模型</p>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="显示名称"
+                    value={newModel.name}
+                    onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
+                    className="input-modern flex-1 px-3 py-2.5 text-sm"
+                  />
+                  <select
+                    value={newModel.provider}
+                    onChange={(e) => setNewModel({ ...newModel, provider: e.target.value })}
+                    className="input-modern px-3 py-2.5 text-sm w-36"
+                  >
+                    <option value="">提供商</option>
+                    <option value="OpenAI">OpenAI</option>
+                    <option value="Anthropic">Anthropic</option>
+                    <option value="Google">Google</option>
+                    <option value="DeepSeek">DeepSeek</option>
+                    <option value="Qwen">通义千问</option>
+                    <option value="Moonshot">Moonshot</option>
+                    <option value="Zhipu">智谱 AI</option>
+                    <option value="Baidu">百度文心一言</option>
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="模型 ID（如 gpt-4o, deepseek-chat）"
+                    value={newModel.modelId}
+                    onChange={(e) => setNewModel({ ...newModel, modelId: e.target.value })}
+                    className="input-modern flex-1 px-3 py-2.5 text-sm"
+                  />
+                  <button onClick={addModel} className="btn-primary px-5 py-2.5 text-sm flex items-center gap-1.5">
+                    <Plus className="w-4 h-4" />
+                    添加
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 border-t border-gray-100 flex gap-3">
+            <button onClick={handleSave} className="flex-1 py-3 btn-primary">保存</button>
+            <button onClick={onBack} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">取消</button>
           </div>
         </div>
       </div>
@@ -162,18 +341,19 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
 export default function Settings() {
   const { settings, updateSettings, setCurrentPage } = useStore();
   const [localSettings, setLocalSettings] = useState(settings);
-  const [showApiKeyPage, setShowApiKeyPage] = useState(false);
-  const [newModel, setNewModel] = useState({ name: '', provider: '', modelId: '' });
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [subPage, setSubPage] = useState<'none' | 'apikey' | 'model'>('none');
 
-  // 当 store 中的 settings 变化时（如 API Key 二级页面保存后），同步到 localSettings
-  const latestSettings = useStore.getState().settings;
-  if (JSON.stringify(latestSettings.apiKeys) !== JSON.stringify(localSettings.apiKeys)) {
-    setLocalSettings((prev) => ({ ...prev, apiKeys: latestSettings.apiKeys }));
+  // 正确方式：用 useEffect 监听 store settings 变化，同步到 localSettings
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
+
+  if (subPage === 'apikey') {
+    return <ApiKeyPage onBack={() => setSubPage('none')} />;
   }
 
-  if (showApiKeyPage) {
-    return <ApiKeyPage onBack={() => setShowApiKeyPage(false)} />;
+  if (subPage === 'model') {
+    return <ModelPage onBack={() => setSubPage('none')} />;
   }
 
   const handleSave = () => {
@@ -182,11 +362,10 @@ export default function Settings() {
     for (const model of enabledModels) {
       const apiKey = getApiKeyForProvider(localSettings.apiKeys, model.provider);
       if (!apiKey) {
-        setValidationError(`模型「${model.name}」(${model.provider}) 已勾选但未配置 API Key，请先前往 API Key 配置页面填写。`);
+        alert(`模型「${model.name}」(${model.provider}) 已勾选但未配置 API Key，请先前往 API Key 配置页面填写。`);
         return;
       }
     }
-    setValidationError(null);
     updateSettings(localSettings);
     setCurrentPage('home');
   };
@@ -201,285 +380,94 @@ export default function Settings() {
     });
   };
 
-  const toggleModelEnabled = (id: string) => {
-    setLocalSettings({
-      ...localSettings,
-      models: localSettings.models.map((m) => {
-        if (m.id !== id) return m;
-        const newEnabled = !m.isEnabled;
-        if (newEnabled) {
-          // 勾选时检查 API Key
-          const apiKey = getApiKeyForProvider(localSettings.apiKeys, m.provider);
-          if (!apiKey) {
-            setValidationError(`模型「${m.name}」(${m.provider}) 需要先配置 API Key。`);
-            return m;
-          }
-        }
-        return { ...m, isEnabled: newEnabled };
-      }),
-    });
-  };
-
-  const addModel = () => {
-    if (!newModel.name || !newModel.provider || !newModel.modelId) return;
-    const model = {
-      id: `model-${Date.now()}`,
-      name: newModel.name,
-      provider: newModel.provider,
-      modelId: newModel.modelId,
-      isEnabled: false,
-      isDefault: false,
-    };
-    setLocalSettings({
-      ...localSettings,
-      models: [...localSettings.models, model],
-    });
-    setNewModel({ name: '', provider: '', modelId: '' });
-  };
-
-  const removeModel = (id: string) => {
-    setLocalSettings({
-      ...localSettings,
-      models: localSettings.models.filter((m) => m.id !== id),
-    });
-  };
-
-  const setDefaultModel = (id: string) => {
-    setLocalSettings({
-      ...localSettings,
-      models: localSettings.models.map((m) => ({ ...m, isDefault: m.id === id })),
-    });
-  };
-
   const enabledCount = localSettings.models.filter((m) => m.isEnabled).length;
-  const configuredProviders = new Set(
-    localSettings.models
-      .filter((m) => m.isEnabled)
-      .map((m) => m.provider)
-  );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <h1 className="text-2xl font-bold text-gray-900">设置</h1>
-            <p className="text-gray-500 mt-1">配置 AI 聊天群的各项参数</p>
+    <div className="min-h-screen bg-[#f0f2f5] p-4">
+      <div className="max-w-2xl mx-auto slide-up">
+        <div className="section-card overflow-hidden">
+          <div className="gradient-bg-blue p-6">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCurrentPage('home')}
+                className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+              <div>
+                <h1 className="text-xl font-bold text-white">设置</h1>
+                <p className="text-white/70 text-sm mt-0.5">配置 AI 聊天群的各项参数</p>
+              </div>
+            </div>
           </div>
 
-          <div className="p-6 space-y-8">
-            {/* API Key 入口卡片 */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Key className="w-5 h-5 text-red-600" />
-                <h2 className="text-lg font-semibold text-gray-900">API Key 配置</h2>
-              </div>
-              <button
-                onClick={() => setShowApiKeyPage(true)}
-                className="w-full bg-gray-50 rounded-xl p-4 flex items-center justify-between hover:bg-gray-100 transition-colors border border-gray-200"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-1">
-                    {Object.entries(PROVIDER_CONFIG).slice(0, 4).map(([key, cfg]) => {
-                      const hasKey = !!localSettings.apiKeys[cfg.keyField];
-                      return (
-                        <div
-                          key={key}
-                          className={`w-7 h-7 rounded-full flex items-center justify-center border-2 border-white ${
-                            hasKey ? 'bg-green-100' : 'bg-gray-200'
-                          }`}
-                        >
-                          <span className={`text-xs font-bold ${hasKey ? 'text-green-700' : 'text-gray-400'}`}>
-                            {cfg.letter}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center border-2 border-white text-xs text-gray-400">
-                      +{Object.keys(PROVIDER_CONFIG).length - 4}
-                    </div>
-                  </div>
-                  <div className="text-left">
-                    <div className="font-medium text-gray-900">
-                      管理提供商密钥
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {configuredProviders.size} 个提供商已启用，共 {Object.keys(PROVIDER_CONFIG).length} 个可选
-                    </div>
-                  </div>
+          <div className="p-6 space-y-6">
+            {/* API Key 入口 */}
+            <button
+              onClick={() => setSubPage('apikey')}
+              className="w-full rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all border border-gray-100 bg-white"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 gradient-bg-rose rounded-xl flex items-center justify-center shadow-sm">
+                  <Key className="w-5 h-5 text-white" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </button>
-            </section>
+                <div className="text-left">
+                  <div className="font-semibold text-gray-900">API Key 配置</div>
+                  <div className="text-sm text-gray-500">管理 AI 提供商密钥和接口地址</div>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
 
-            {/* 模型管理 - 多选 */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Brain className="w-5 h-5 text-orange-600" />
-                <h2 className="text-lg font-semibold text-gray-900">模型管理</h2>
-                <span className="text-sm text-gray-500">已选 {enabledCount} 个</span>
-              </div>
-              {validationError && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                  <div className="text-sm text-red-700">{validationError}</div>
-                  <button onClick={() => setValidationError(null)} className="text-red-400 hover:text-red-600 ml-auto shrink-0">关闭</button>
+            {/* 模型管理入口 */}
+            <button
+              onClick={() => setSubPage('model')}
+              className="w-full rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all border border-gray-100 bg-white"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 gradient-bg-orange rounded-xl flex items-center justify-center shadow-sm">
+                  <Brain className="w-5 h-5 text-white" />
                 </div>
-              )}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                <div className="space-y-2">
-                  {localSettings.models.map((model) => {
-                    const apiKey = getApiKeyForProvider(localSettings.apiKeys, model.provider);
-                    const hasKey = !!apiKey;
-                    return (
-                      <div
-                        key={model.id}
-                        className={`flex items-center justify-between rounded-lg p-3 border transition-colors ${
-                          model.isEnabled
-                            ? 'border-blue-200 bg-blue-50/50'
-                            : 'border-gray-200 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={model.isEnabled}
-                            onChange={() => toggleModelEnabled(model.id)}
-                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            title={hasKey ? '取消选择' : '需要先配置 API Key'}
-                          />
-                          <div>
-                            <div className="font-medium text-gray-900 flex items-center gap-2">
-                              {model.name}
-                              {!hasKey && (
-                                <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">需配置 Key</span>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {model.provider} / {model.modelId}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setDefaultModel(model.id)}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                              model.isDefault
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
-                            }`}
-                            title="设为默认"
-                          >
-                            默认
-                          </button>
-                          <button
-                            onClick={() => removeModel(model.id)}
-                            className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="border-t border-gray-200 pt-3 space-y-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="显示名称"
-                      value={newModel.name}
-                      onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                    <select
-                      value={newModel.provider}
-                      onChange={(e) => setNewModel({ ...newModel, provider: e.target.value })}
-                      className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    >
-                      <option value="">提供商</option>
-                      <option value="OpenAI">OpenAI（开放智能）</option>
-                      <option value="Anthropic">Anthropic（人类反馈）</option>
-                      <option value="Google">Google（谷歌）</option>
-                      <option value="DeepSeek">DeepSeek（深度求索）</option>
-                      <option value="Qwen">通义千问（阿里云）</option>
-                      <option value="Moonshot">Moonshot（月之暗面）</option>
-                      <option value="Zhipu">智谱 AI（清华）</option>
-                      <option value="Baidu">文心一言（百度）</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="模型 ID（如 gpt-4o, deepseek-chat）"
-                      value={newModel.modelId}
-                      onChange={(e) => setNewModel({ ...newModel, modelId: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
-                    <button
-                      onClick={addModel}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
-                    >
-                      <Plus className="w-4 h-4" />
-                      添加
-                    </button>
-                  </div>
+                <div className="text-left">
+                  <div className="font-semibold text-gray-900">模型管理</div>
+                  <div className="text-sm text-gray-500">已启用 {enabledCount} 个模型</div>
                 </div>
               </div>
-            </section>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* 分隔 */}
+            <div className="border-t border-gray-100"></div>
 
             {/* 群活跃时间 */}
             <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Clock className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">群活跃时间段</h2>
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="w-5 h-5 text-blue-500" />
+                <h2 className="text-base font-semibold text-gray-900">群活跃时间段</h2>
               </div>
-              <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={localSettings.activeHours.enabled}
                     onChange={(e) =>
-                      setLocalSettings({
-                        ...localSettings,
-                        activeHours: { ...localSettings.activeHours, enabled: e.target.checked },
-                      })
+                      setLocalSettings({ ...localSettings, activeHours: { ...localSettings.activeHours, enabled: e.target.checked } })
                     }
                     className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-gray-700">启用活跃时间段限制</span>
+                  <span className="text-gray-700 text-sm">启用活跃时间段限制</span>
                 </label>
                 {localSettings.activeHours.enabled && (
-                  <div className="flex items-center gap-4 pl-8">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">开始</span>
-                      <input
-                        type="time"
-                        value={localSettings.activeHours.start}
-                        onChange={(e) =>
-                          setLocalSettings({
-                            ...localSettings,
-                            activeHours: { ...localSettings.activeHours, start: e.target.value },
-                          })
-                        }
-                        className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <span className="text-gray-400">至</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">结束</span>
-                      <input
-                        type="time"
-                        value={localSettings.activeHours.end}
-                        onChange={(e) =>
-                          setLocalSettings({
-                            ...localSettings,
-                            activeHours: { ...localSettings.activeHours, end: e.target.value },
-                          })
-                        }
-                        className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
+                  <div className="flex items-center gap-3 pl-8">
+                    <input type="time" value={localSettings.activeHours.start}
+                      onChange={(e) => setLocalSettings({ ...localSettings, activeHours: { ...localSettings.activeHours, start: e.target.value } })}
+                      className="input-modern px-3 py-2 text-sm"
+                    />
+                    <span className="text-gray-400 text-sm">至</span>
+                    <input type="time" value={localSettings.activeHours.end}
+                      onChange={(e) => setLocalSettings({ ...localSettings, activeHours: { ...localSettings.activeHours, end: e.target.value } })}
+                      className="input-modern px-3 py-2 text-sm"
+                    />
                   </div>
                 )}
               </div>
@@ -487,27 +475,25 @@ export default function Settings() {
 
             {/* AI 视听能力 */}
             <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Eye className="w-5 h-5 text-purple-600" />
-                <h2 className="text-lg font-semibold text-gray-900">AI 视听能力</h2>
+              <div className="flex items-center gap-2 mb-3">
+                <Eye className="w-5 h-5 text-purple-500" />
+                <h2 className="text-base font-semibold text-gray-900">AI 视听能力</h2>
               </div>
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 {[
-                  { key: 'imageUnderstanding' as const, label: '图片理解', desc: 'AI 可以理解和分析图片内容' },
-                  { key: 'emojiReply' as const, label: '表情包回复', desc: 'AI 可以使用表情包进行回复' },
-                  { key: 'voiceReply' as const, label: '语音回复', desc: 'AI 可以发送语音消息' },
-                  { key: 'videoShare' as const, label: '视频分享', desc: 'AI 可以分享和讨论视频内容' },
+                  { key: 'imageUnderstanding' as const, label: '图片理解', desc: '理解和分析图片内容' },
+                  { key: 'emojiReply' as const, label: '表情包回复', desc: '使用表情包回复' },
+                  { key: 'voiceReply' as const, label: '语音回复', desc: '发送语音消息' },
+                  { key: 'videoShare' as const, label: '视频分享', desc: '分享和讨论视频' },
                 ].map((item) => (
-                  <label key={item.key} className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={localSettings.aiCapabilities[item.key]}
+                  <label key={item.key} className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked={localSettings.aiCapabilities[item.key]}
                       onChange={() => toggleCapability(item.key)}
-                      className="w-5 h-5 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                     <div>
-                      <div className="text-gray-900 font-medium">{item.label}</div>
-                      <div className="text-sm text-gray-500">{item.desc}</div>
+                      <span className="text-gray-900 text-sm font-medium">{item.label}</span>
+                      <span className="text-gray-400 text-sm ml-2">{item.desc}</span>
                     </div>
                   </label>
                 ))}
@@ -516,45 +502,29 @@ export default function Settings() {
 
             {/* 聊天时长 */}
             <section>
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare className="w-5 h-5 text-green-600" />
-                <h2 className="text-lg font-semibold text-gray-900">聊天时长限制</h2>
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare className="w-5 h-5 text-green-500" />
+                <h2 className="text-base font-semibold text-gray-900">聊天时长限制</h2>
               </div>
-              <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={localSettings.chatDuration.enabled}
                     onChange={(e) =>
-                      setLocalSettings({
-                        ...localSettings,
-                        chatDuration: { ...localSettings.chatDuration, enabled: e.target.checked },
-                      })
+                      setLocalSettings({ ...localSettings, chatDuration: { ...localSettings.chatDuration, enabled: e.target.checked } })
                     }
                     className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-gray-700">启用自动终止</span>
+                  <span className="text-gray-700 text-sm">启用自动终止</span>
                 </label>
                 {localSettings.chatDuration.enabled && (
-                  <div className="flex items-center gap-4 pl-8">
-                    <span className="text-sm text-gray-600">时长</span>
-                    <input
-                      type="number"
-                      min={5}
-                      max={180}
-                      value={localSettings.chatDuration.minutes}
-                      onChange={(e) =>
-                        setLocalSettings({
-                          ...localSettings,
-                          chatDuration: {
-                            ...localSettings.chatDuration,
-                            minutes: parseInt(e.target.value) || 30,
-                          },
-                        })
-                      }
-                      className="w-24 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  <div className="flex items-center gap-3 pl-8">
+                    <input type="number" min={5} max={180} value={localSettings.chatDuration.minutes}
+                      onChange={(e) => setLocalSettings({ ...localSettings, chatDuration: { ...localSettings.chatDuration, minutes: parseInt(e.target.value) || 30 } })}
+                      className="input-modern w-24 px-3 py-2 text-sm"
                     />
-                    <span className="text-gray-600">分钟</span>
+                    <span className="text-gray-500 text-sm">分钟</span>
                   </div>
                 )}
               </div>
@@ -562,18 +532,8 @@ export default function Settings() {
           </div>
 
           <div className="p-6 border-t border-gray-100 flex gap-3">
-            <button
-              onClick={handleSave}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-            >
-              保存设置
-            </button>
-            <button
-              onClick={() => setCurrentPage('home')}
-              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-            >
-              取消
-            </button>
+            <button onClick={handleSave} className="flex-1 py-3 btn-primary">保存设置</button>
+            <button onClick={() => setCurrentPage('home')} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">取消</button>
           </div>
         </div>
       </div>
