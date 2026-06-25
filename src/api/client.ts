@@ -42,7 +42,7 @@ export async function apiLogin(
 // Sessions
 
 export async function apiGetSessions(userId: string): Promise<ChatSession[]> {
-  return request<ChatSession[]>('GET', `/sessions?userId=${encodeURIComponent(userId)}`);
+  return request<ChatSession[]>('GET', `/sessions/${encodeURIComponent(userId)}`);
 }
 
 export async function apiSaveSession(session: ChatSession): Promise<void> {
@@ -50,7 +50,7 @@ export async function apiSaveSession(session: ChatSession): Promise<void> {
 }
 
 export async function apiUpdateSession(session: ChatSession): Promise<void> {
-  return request('PUT', '/sessions', session);
+  return request('PUT', `/sessions/${encodeURIComponent(session.id)}`, session);
 }
 
 export async function apiDeleteSession(sessionId: string): Promise<void> {
@@ -74,5 +74,5 @@ export async function apiGetAgents(): Promise<AIAgent[]> {
 }
 
 export async function apiSaveAgents(agents: AIAgent[]): Promise<void> {
-  return request('POST', '/agents', agents);
+  return request('PUT', '/agents', agents);
 }
