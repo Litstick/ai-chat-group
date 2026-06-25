@@ -47,7 +47,6 @@ export default function AgentConfig() {
       alert('请至少选择 2 个 AI 参与群聊');
       return;
     }
-    // 验证每个激活的 AI 都有有效的模型
     for (const agent of activeAgents) {
       const model = enabledModels.find((m) => m.id === agent.model);
       if (!model) {
@@ -62,67 +61,82 @@ export default function AgentConfig() {
   const activeCount = localAgents.filter((a) => a.isActive).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setCurrentPage('home')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">AI 配置</h1>
-                <p className="text-gray-500 mt-1">
-                  选择参与群聊的 AI 并配置角色 ({activeCount}/5)
-                </p>
-              </div>
+    <div className="min-h-screen bg-[#f0f2f5] p-4">
+      <div className="max-w-2xl mx-auto slide-up">
+        <div className="section-card overflow-hidden">
+          {/* 头部 */}
+          <div className="gradient-bg-purple p-6 flex items-center gap-3">
+            <button
+              onClick={() => setCurrentPage('home')}
+              className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-white">AI 配置</h1>
+              <p className="text-white/70 text-sm mt-0.5">
+                选择参与群聊的 AI 并配置角色 ({activeCount}/5)
+              </p>
             </div>
           </div>
 
+          {/* 提示 */}
           {enabledModels.length === 0 && (
-            <div className="mx-6 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-              <span className="text-amber-600 text-sm">请先在「设置」中启用至少一个模型，然后再配置 AI 角色。</span>
+            <div className="mx-6 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-700 text-sm">
+              请先在「设置」中启用至少一个模型，然后再配置 AI 角色。
             </div>
           )}
 
-          <div className="p-6 space-y-4">
+          {/* AI 角色列表 */}
+          <div className="p-6 space-y-3">
             {localAgents.map((agent) => {
               const currentModel = enabledModels.find((m) => m.id === agent.model);
+              const isExpanded = expandedAgent === agent.id;
+
               return (
                 <div
                   key={agent.id}
-                  className={`border rounded-xl overflow-hidden transition-all ${
-                    agent.isActive ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200 bg-white'
+                  className={`rounded-xl overflow-hidden border-2 transition-all ${
+                    agent.isActive
+                      ? 'border-blue-300 bg-blue-50/30 shadow-sm'
+                      : 'border-gray-200 bg-white'
                   }`}
                 >
+                  {/* 折叠头部 */}
                   <div
-                    className="flex items-center gap-4 p-4 cursor-pointer"
-                    onClick={() => setExpandedAgent(expandedAgent === agent.id ? null : agent.id)}
+                    className="flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
+                    onClick={() => setExpandedAgent(isExpanded ? null : agent.id)}
                   >
                     <img
                       src={agent.avatar}
                       alt={agent.name}
-                      className="w-12 h-12 rounded-full bg-gray-100"
+                      className={`w-11 h-11 rounded-full bg-gray-100 shrink-0 ${
+                        agent.isActive ? 'ring-2 ring-blue-400 ring-offset-1' : ''
+                      }`}
                     />
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-900">{agent.name}</span>
-                        <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          agent.isActive
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
                           {agent.role}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-500 mt-0.5">
-                        {currentModel ? currentModel.name : '未选择模型'}
-                        {currentModel && (
-                          <span className="text-gray-400"> ({currentModel.provider})</span>
+                      <div className="text-sm text-gray-500 mt-0.5 truncate">
+                        {currentModel ? (
+                          <span>{currentModel.name} ({currentModel.provider})</span>
+                        ) : (
+                          <span className="text-amber-500">未选择模型</span>
                         )}
                       </div>
                     </div>
+
+                    {/* 开关 */}
                     <label
-                      className="relative inline-flex items-center cursor-pointer"
+                      className="relative inline-flex items-center cursor-pointer shrink-0"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <input
@@ -131,27 +145,32 @@ export default function AgentConfig() {
                         onChange={() => toggleAgent(agent.id)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
-                    {expandedAgent === agent.id ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400" />
+
+                    {/* 展开箭头 */}
+                    {isExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400 shrink-0" />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                      <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
                     )}
                   </div>
 
-                  {expandedAgent === agent.id && agent.isActive && (
-                    <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
+                  {/* 展开内容 - 不要求 agent.isActive */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4 fade-in">
                       {/* 模型选择 */}
                       <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                          <Brain className="w-4 h-4" />
+                          <div className="w-6 h-6 gradient-bg-blue rounded-md flex items-center justify-center">
+                            <Brain className="w-3.5 h-3.5 text-white" />
+                          </div>
                           模型选择
                         </label>
                         <select
                           value={agent.model}
                           onChange={(e) => updateAgentField(agent.id, 'model', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="input-modern w-full px-3 py-2.5 text-sm"
                         >
                           <option value="">请选择模型</option>
                           {enabledModels.map((model) => (
@@ -165,7 +184,9 @@ export default function AgentConfig() {
                       {/* 角色描述 */}
                       <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                          <User className="w-4 h-4" />
+                          <div className="w-6 h-6 gradient-bg-green rounded-md flex items-center justify-center">
+                            <User className="w-3.5 h-3.5 text-white" />
+                          </div>
                           角色描述
                         </label>
                         <textarea
@@ -173,30 +194,35 @@ export default function AgentConfig() {
                           onChange={(e) => updateAgentField(agent.id, 'description', e.target.value)}
                           placeholder="描述这个 AI 的角色和专长..."
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                          className="input-modern w-full px-3 py-2.5 text-sm resize-none"
                         />
                       </div>
 
                       {/* Skill 配置 */}
                       <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                          <Wrench className="w-4 h-4" />
+                          <div className="w-6 h-6 gradient-bg-orange rounded-md flex items-center justify-center">
+                            <Wrench className="w-3.5 h-3.5 text-white" />
+                          </div>
                           Skill 配置
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {skills.map((skill) => (
-                            <button
-                              key={skill.id}
-                              onClick={() => toggleSkill(agent.id, skill.id)}
-                              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                agent.skills.includes(skill.id)
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              {skill.name}
-                            </button>
-                          ))}
+                          {skills.map((skill) => {
+                            const isSelected = agent.skills.includes(skill.id);
+                            return (
+                              <button
+                                key={skill.id}
+                                onClick={() => toggleSkill(agent.id, skill.id)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                  isSelected
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                {skill.name}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -206,10 +232,11 @@ export default function AgentConfig() {
             })}
           </div>
 
+          {/* 保存按钮 */}
           <div className="p-6 border-t border-gray-100">
             <button
               onClick={handleSave}
-              className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 btn-primary flex items-center justify-center gap-2"
             >
               <Save className="w-5 h-5" />
               保存配置
