@@ -147,13 +147,15 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
 
 // ===== 模型管理二级页面 =====
 function ModelPage({ onBack }: { onBack: () => void }) {
-  const { updateSettings } = useStore();
-  // 直接从 store 获取最新的 apiKeys，确保二级页面之间的数据始终同步
-  const currentApiKeys = useStore.getState().settings.apiKeys;
-  const currentModels = useStore.getState().settings.models;
-  const [localModels, setLocalModels] = useState(currentModels);
+  const { settings, updateSettings } = useStore();
+  const [localModels, setLocalModels] = useState(settings.models);
   const [newModel, setNewModel] = useState({ name: '', provider: '', modelId: '' });
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // 同步 store 中的最新 models 和 apiKeys
+  useEffect(() => {
+    setLocalModels(settings.models);
+  }, [settings.models]);
 
   const toggleModelEnabled = (id: string) => {
     setValidationError(null);
@@ -162,7 +164,7 @@ function ModelPage({ onBack }: { onBack: () => void }) {
         if (m.id !== id) return m;
         const newEnabled = !m.isEnabled;
         if (newEnabled) {
-          const apiKey = getApiKeyForProvider(currentApiKeys, m.provider);
+          const apiKey = getApiKeyForProvider(settings.apiKeys, m.provider);
           if (!apiKey) {
             setValidationError(`模型「${m.name}」(${m.provider}) 需要先配置 API Key，请返回设置页面配置。`);
             return m;
@@ -193,7 +195,7 @@ function ModelPage({ onBack }: { onBack: () => void }) {
   const handleSave = () => {
     const enabledModels = localModels.filter((m) => m.isEnabled);
     for (const model of enabledModels) {
-      const apiKey = getApiKeyForProvider(currentApiKeys, model.provider);
+      const apiKey = getApiKeyForProvider(settings.apiKeys, model.provider);
       if (!apiKey) {
         setValidationError(`模型「${model.name}」(${model.provider}) 已勾选但未配置 API Key，请返回设置页面配置。`);
         return;
@@ -231,7 +233,7 @@ function ModelPage({ onBack }: { onBack: () => void }) {
 
             <div className="space-y-2">
               {localModels.map((model) => {
-                const apiKey = getApiKeyForProvider(currentApiKeys, model.provider);
+                const apiKey = getApiKeyForProvider(settings.apiKeys, model.provider);
                 const hasKey = !!apiKey;
                 return (
                   <div
