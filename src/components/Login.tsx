@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { apiLogin, apiRegister } from '../api/client';
-import { LogIn, UserPlus, MessageCircle, AlertCircle } from 'lucide-react';
+import { LogIn, UserPlus, MessageCircle, AlertCircle, User, Lock, X, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const { login, setCurrentPage } = useStore();
@@ -80,6 +80,13 @@ export default function Login() {
     if (e.key === 'Enter') handler();
   };
 
+  // 统一输入框样式常量
+  const inputBaseClass =
+    'w-full pl-10 pr-4 py-3 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400';
+
+  const nicknameInputClass =
+    'w-full pl-10 pr-4 py-3 bg-white/40 backdrop-blur-sm border border-dashed border-gray-200 rounded-xl text-sm text-gray-600 placeholder-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300';
+
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center px-4">
       <div className="w-full max-w-md fade-in">
@@ -123,120 +130,211 @@ export default function Login() {
           </div>
 
           <div className="px-8 pb-8 pt-2">
-            {activeTab === 'login' ? (
-              /* 登录表单 */
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    用户名
-                  </label>
-                  <input
-                    type="text"
-                    value={loginUsername}
-                    onChange={(e) => setLoginUsername(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, handleLogin)}
-                    placeholder="请输入用户名"
-                    className="input-modern"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    密码
-                  </label>
-                  <input
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, handleLogin)}
-                    placeholder="请输入密码"
-                    className="input-modern"
-                  />
-                </div>
-                {loginError && (
-                  <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50/80 backdrop-blur-sm px-4 py-3 rounded-xl">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    {loginError}
+            <div
+              key={activeTab}
+              className="animate-[fadeIn_0.3s_ease-in-out]"
+              style={{
+                animation: 'fadeIn 0.3s ease-in-out',
+              }}
+            >
+              {activeTab === 'login' ? (
+                /* 登录表单 */
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      用户名
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={loginUsername}
+                        onChange={(e) => setLoginUsername(e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, handleLogin)}
+                        placeholder="请输入用户名"
+                        className={inputBaseClass}
+                        aria-label="用户名"
+                      />
+                    </div>
                   </div>
-                )}
-                <button
-                  onClick={handleLogin}
-                  className="btn-primary w-full py-3.5 flex items-center justify-center gap-2"
-                >
-                  <LogIn className="w-4 h-4" />
-                  登录
-                </button>
-              </div>
-            ) : (
-              /* 注册表单 */
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    用户名
-                  </label>
-                  <input
-                    type="text"
-                    value={regUsername}
-                    onChange={(e) => setRegUsername(e.target.value)}
-                    placeholder="请输入用户名"
-                    className="input-modern"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    密码
-                  </label>
-                  <input
-                    type="password"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    placeholder="请输入密码（至少 6 位）"
-                    className="input-modern"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    确认密码
-                  </label>
-                  <input
-                    type="password"
-                    value={regConfirmPassword}
-                    onChange={(e) => setRegConfirmPassword(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, handleRegister)}
-                    placeholder="请再次输入密码"
-                    className="input-modern"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    昵称 <span className="text-gray-400">（选填）</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={regNickname}
-                    onChange={(e) => setRegNickname(e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, handleRegister)}
-                    placeholder="请输入昵称"
-                    className="input-modern"
-                  />
-                </div>
-                {regError && (
-                  <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50/80 backdrop-blur-sm px-4 py-3 rounded-xl">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    {regError}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      密码
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="password"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, handleLogin)}
+                        placeholder="请输入密码"
+                        className={inputBaseClass}
+                        aria-label="密码"
+                      />
+                    </div>
                   </div>
-                )}
-                <button
-                  onClick={handleRegister}
-                  className="btn-primary w-full py-3.5 flex items-center justify-center gap-2"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  注册
-                </button>
-              </div>
-            )}
+                  {loginError && (
+                    <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50/80 backdrop-blur-sm px-4 py-3 rounded-xl">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span className="flex-1">{loginError}</span>
+                      <button
+                        onClick={() => setLoginError('')}
+                        className="ml-auto flex-shrink-0 p-0.5 rounded-full hover:bg-red-100/60 transition-colors"
+                        aria-label="关闭错误提示"
+                      >
+                        <X className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                    </div>
+                  )}
+                  <button
+                    onClick={handleLogin}
+                    disabled={loading}
+                    className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        登录中...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4" />
+                        登录
+                      </>
+                    )}
+                  </button>
+
+                  {/* Footer 提示 */}
+                  <p className="text-center text-xs text-gray-400 pt-1">
+                    首次使用？请先
+                    <button
+                      onClick={() => setActiveTab('register')}
+                      className="text-blue-500 hover:text-blue-600 font-medium ml-1 transition-colors"
+                    >
+                      注册账号
+                    </button>
+                  </p>
+                </div>
+              ) : (
+                /* 注册表单 */
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      用户名
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={regUsername}
+                        onChange={(e) => setRegUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className={inputBaseClass}
+                        aria-label="注册用户名"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      密码
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="password"
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        placeholder="请输入密码（至少 6 位）"
+                        className={inputBaseClass}
+                        aria-label="注册密码"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      确认密码
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="password"
+                        value={regConfirmPassword}
+                        onChange={(e) => setRegConfirmPassword(e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, handleRegister)}
+                        placeholder="请再次输入密码"
+                        className={inputBaseClass}
+                        aria-label="确认密码"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-2">
+                      昵称 <span className="text-gray-300">（选填）</span>
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={regNickname}
+                        onChange={(e) => setRegNickname(e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(e, handleRegister)}
+                        placeholder="请输入昵称"
+                        className={nicknameInputClass}
+                        aria-label="昵称（选填）"
+                      />
+                    </div>
+                  </div>
+                  {regError && (
+                    <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50/80 backdrop-blur-sm px-4 py-3 rounded-xl">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span className="flex-1">{regError}</span>
+                      <button
+                        onClick={() => setRegError('')}
+                        className="ml-auto flex-shrink-0 p-0.5 rounded-full hover:bg-red-100/60 transition-colors"
+                        aria-label="关闭错误提示"
+                      >
+                        <X className="w-3.5 h-3.5 text-red-400" />
+                      </button>
+                    </div>
+                  )}
+                  <button
+                    onClick={handleRegister}
+                    disabled={loading}
+                    className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        注册中...
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" />
+                        注册
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* fadeIn keyframes */}
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
