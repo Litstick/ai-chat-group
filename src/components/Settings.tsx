@@ -398,14 +398,14 @@ export default function Settings() {
                       className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                     >
                       <option value="">提供商</option>
-                      <option value="OpenAI">OpenAI</option>
-                      <option value="Anthropic">Anthropic</option>
-                      <option value="Google">Google</option>
-                      <option value="DeepSeek">DeepSeek</option>
-                      <option value="Qwen">通义千问</option>
-                      <option value="Moonshot">Moonshot</option>
-                      <option value="Zhipu">智谱 AI</option>
-                      <option value="Baidu">百度文心一言</option>
+                      <option value="OpenAI">OpenAI（开放智能）</option>
+                      <option value="Anthropic">Anthropic（人类反馈）</option>
+                      <option value="Google">Google（谷歌）</option>
+                      <option value="DeepSeek">DeepSeek（深度求索）</option>
+                      <option value="Qwen">通义千问（阿里云）</option>
+                      <option value="Moonshot">Moonshot（月之暗面）</option>
+                      <option value="Zhipu">智谱 AI（清华）</option>
+                      <option value="Baidu">文心一言（百度）</option>
                     </select>
                   </div>
                   <div className="flex gap-2">
