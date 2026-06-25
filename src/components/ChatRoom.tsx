@@ -55,10 +55,19 @@ export default function ChatRoom() {
   const getApiKeyForProvider = useCallback(
     (provider: string): string => {
       const p = provider.toLowerCase();
-      if (p === 'openai') return settings.apiKeys.openai;
-      if (p === 'anthropic') return settings.apiKeys.anthropic;
-      if (p === 'google') return settings.apiKeys.google;
-      return '';
+      const map: Record<string, string> = {
+        openai: 'openai',
+        anthropic: 'anthropic',
+        google: 'google',
+        deepseek: 'deepseek',
+        qwen: 'qwen',
+        moonshot: 'moonshot',
+        zhipu: 'zhipu',
+        baidu: 'baidu',
+      };
+      const field = map[p];
+      if (!field) return '';
+      return (settings.apiKeys as Record<string, string>)[field] || '';
     },
     [settings.apiKeys]
   );
