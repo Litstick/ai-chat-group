@@ -55,7 +55,7 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
 
   const handleSave = () => {
     updateSettings({ apiKeys: localApiKeys });
-    onBack();
+    onBack(); // 返回时 Settings 组件会用 store 中的最新值
   };
 
   const toggleKeyVisibility = (key: string) => {
@@ -165,6 +165,12 @@ export default function Settings() {
   const [showApiKeyPage, setShowApiKeyPage] = useState(false);
   const [newModel, setNewModel] = useState({ name: '', provider: '', modelId: '' });
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // 当 store 中的 settings 变化时（如 API Key 二级页面保存后），同步到 localSettings
+  const latestSettings = useStore.getState().settings;
+  if (JSON.stringify(latestSettings.apiKeys) !== JSON.stringify(localSettings.apiKeys)) {
+    setLocalSettings((prev) => ({ ...prev, apiKeys: latestSettings.apiKeys }));
+  }
 
   if (showApiKeyPage) {
     return <ApiKeyPage onBack={() => setShowApiKeyPage(false)} />;
