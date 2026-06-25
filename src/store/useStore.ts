@@ -139,9 +139,17 @@ export const useStore = create<AppState>((set, get) => ({
   initApp: async () => {
     const currentUser = get().currentUser;
     try {
-      // 从服务端加载设置
+      // 从服务端加载设置，与本地合并（本地优先，防止服务端空数据覆盖）
       const serverSettings = await api.apiGetSettings();
-      const mergedSettings = { ...defaultSettings, ...serverSettings, apiKeys: { ...defaultSettings.apiKeys, ...serverSettings.apiKeys } };
+      const localSettings = storage.getSettings();
+      // 深度合并：以本地 apiKeys 为准（用户已配置的 Key 不能被空值覆盖）
+      const mergedApiKeys = { ...localSettings.apiKeys };
+      if (serverSettings.apiKeys) {
+        for (const [key, value] of Object.entries(serverSettings.apiKeys)) {
+          if (value) mergedApiKeys[key] = value;
+        }
+      }
+      const mergedSettings = { ...localSettings, ...serverSettings, apiKeys: mergedApiKeys };
       storage.saveSettings(mergedSettings);
       set({ settings: mergedSettings });
     } catch {
@@ -151,8 +159,10 @@ export const useStore = create<AppState>((set, get) => ({
 
     try {
       const serverAgents = await api.apiGetAgents();
-      storage.saveAgents(serverAgents);
-      set({ agents: serverAgents });
+      if (Array.isArray(serverAgents) && serverAgents.length > 0) {
+        storage.saveAgents(serverAgents);
+        set({ agents: serverAgents });
+      }
     } catch {
       set({ agents: storage.getAgents() });
     }

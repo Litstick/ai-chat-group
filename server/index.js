@@ -13,13 +13,23 @@ app.use(express.json());
 
 const DATA_DIR = path.join(__dirname, 'data');
 
-function readJSON(filename) {
+// 确保数据目录存在
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function readJSON(filename, defaultVal) {
   const filePath = path.join(DATA_DIR, filename);
   try {
     const raw = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // 防止空数组覆盖对象
+    if (defaultVal !== undefined && typeof defaultVal === 'object' && !Array.isArray(defaultVal) && Array.isArray(parsed)) {
+      return defaultVal;
+    }
+    return parsed;
   } catch {
-    return filename === 'passwords.json' ? {} : [];
+    return defaultVal !== undefined ? defaultVal : [];
   }
 }
 
@@ -30,6 +40,26 @@ function writeJSON(filename, data) {
   } catch (err) {
     console.error(`Failed to write ${filename}:`, err.message);
   }
+}
+
+// 深度合并对象
+function deepMerge(target, source) {
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (
+      source[key] &&
+      typeof source[key] === 'object' &&
+      !Array.isArray(source[key]) &&
+      target[key] &&
+      typeof target[key] === 'object' &&
+      !Array.isArray(target[key])
+    ) {
+      result[key] = deepMerge(target[key], source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
 }
 
 // ===== Auth endpoints =====
@@ -58,8 +88,7 @@ app.post('/api/auth/register', (req, res) => {
   users.push(user);
   writeJSON('users.json', users);
 
-  // Store password as simple base64
-  const passwords = readJSON('passwords.json');
+  const passwords = readJSON('passwords.json', {});
   passwords[userId] = Buffer.from(password).toString('base64');
   writeJSON('passwords.json', passwords);
 
@@ -79,7 +108,7 @@ app.post('/api/auth/login', (req, res) => {
     return res.json({ success: false, error: '用户不存在' });
   }
 
-  const passwords = readJSON('passwords.json');
+  const passwords = readJSON('passwords.json', {});
   const storedHash = passwords[user.id];
   if (storedHash !== Buffer.from(password).toString('base64')) {
     return res.json({ success: false, error: '密码错误' });
@@ -111,7 +140,7 @@ app.put('/api/sessions/:id', (req, res) => {
   const sessions = readJSON('sessions.json');
   const idx = sessions.findIndex((s) => s.id === id);
   if (idx >= 0) {
-    sessions[idx] = { ...sessions[idx], ...partial };
+    sessions[idx] = deepMerge(sessions[idx], partial);
     writeJSON('sessions.json', sessions);
     return res.json({ success: true });
   }
@@ -129,13 +158,15 @@ app.delete('/api/sessions/:id', (req, res) => {
 // ===== Settings endpoints =====
 
 app.get('/api/settings', (req, res) => {
-  const settings = readJSON('settings.json');
+  // settings 是对象，不是数组
+  const settings = readJSON('settings.json', {});
   res.json(settings);
 });
 
 app.put('/api/settings', (req, res) => {
-  const existing = readJSON('settings.json');
-  const merged = { ...existing, ...req.body };
+  // 使用深度合并，确保 apiKeys 等嵌套对象正确更新
+  const existing = readJSON('settings.json', {});
+  const merged = deepMerge(existing, req.body);
   writeJSON('settings.json', merged);
   res.json({ success: true });
 });
