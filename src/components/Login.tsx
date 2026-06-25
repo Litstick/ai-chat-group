@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { userStorage } from '../utils/storage';
+import { apiLogin, apiRegister } from '../api/client';
 import { LogIn, UserPlus, MessageCircle, AlertCircle } from 'lucide-react';
 
 export default function Login() {
@@ -11,6 +11,7 @@ export default function Login() {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // 注册表单
   const [regUsername, setRegUsername] = useState('');
@@ -19,22 +20,31 @@ export default function Login() {
   const [regNickname, setRegNickname] = useState('');
   const [regError, setRegError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setLoginError('');
     if (!loginUsername.trim() || !loginPassword.trim()) {
       setLoginError('请输入用户名和密码');
       return;
     }
-    const result = userStorage.login(loginUsername.trim(), loginPassword);
-    if (typeof result === 'string') {
-      setLoginError(result);
-      return;
+    setLoading(true);
+    try {
+      const result = await apiLogin(loginUsername.trim(), loginPassword);
+      if (!result.success) {
+        setLoginError(result.error || '登录失败');
+        return;
+      }
+      if (result.user) {
+        login(result.user);
+        setCurrentPage('home');
+      }
+    } catch (err) {
+      setLoginError('网络错误，请检查服务端是否启动');
+    } finally {
+      setLoading(false);
     }
-    login(result);
-    setCurrentPage('home');
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setRegError('');
     if (!regUsername.trim() || !regPassword.trim()) {
       setRegError('请输入用户名和密码');
@@ -48,17 +58,22 @@ export default function Login() {
       setRegError('密码长度不能少于 6 位');
       return;
     }
-    const result = userStorage.register(
-      regUsername.trim(),
-      regPassword,
-      regNickname.trim()
-    );
-    if (typeof result === 'string') {
-      setRegError(result);
-      return;
+    setLoading(true);
+    try {
+      const result = await apiRegister(regUsername.trim(), regPassword, regNickname.trim());
+      if (!result.success) {
+        setRegError(result.error || '注册失败');
+        return;
+      }
+      if (result.user) {
+        login(result.user);
+        setCurrentPage('home');
+      }
+    } catch (err) {
+      setRegError('网络错误，请检查服务端是否启动');
+    } finally {
+      setLoading(false);
     }
-    login(result);
-    setCurrentPage('home');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, handler: () => void) => {

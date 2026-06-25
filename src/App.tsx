@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useStore } from './store/useStore';
 import Home from './components/Home';
 import Settings from './components/Settings';
@@ -8,12 +9,27 @@ import Login from './components/Login';
 import Profile from './components/Profile';
 
 function App() {
-  const { currentPage, currentUser } = useStore();
+  const { currentPage, currentUser, initialized, initApp } = useStore();
+
+  useEffect(() => {
+    initApp();
+  }, []);
+
+  if (!initialized) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg font-medium">加载中...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) return <Login />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f0f2f5]">
       {currentPage === 'home' && <Home />}
       {currentPage === 'settings' && <Settings />}
       {currentPage === 'chat' && <ChatRoom />}
