@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import type { AIAgent } from '../types';
-import { User, Wrench, ChevronDown, ChevronUp, Save, ArrowLeft, Brain } from 'lucide-react';
+import { User, ChevronDown, ChevronUp, Save, ArrowLeft, Brain, Sparkles, Palette } from 'lucide-react';
 
 export default function AgentConfig() {
-  const { agents, updateAgents, skills, settings, setCurrentPage } = useStore();
+  const { agents, updateAgents, settings, setCurrentPage } = useStore();
   const [localAgents, setLocalAgents] = useState<AIAgent[]>(agents);
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
 
-  // 同步 store 中的 agents 到本地（initApp 异步加载后会更新 store）
   useEffect(() => {
     if (agents.length > 0) {
       setLocalAgents(agents);
@@ -36,16 +35,9 @@ export default function AgentConfig() {
     );
   };
 
-  const toggleSkill = (agentId: string, skillId: string) => {
-    setLocalAgents(
-      localAgents.map((a) => {
-        if (a.id !== agentId) return a;
-        const skills = a.skills.includes(skillId)
-          ? a.skills.filter((s) => s !== skillId)
-          : [...a.skills, skillId];
-        return { ...a, skills };
-      })
-    );
+  const handleExpertiseChange = (agentId: string, value: string) => {
+    const expertise = value.split(/[,，、]/).map(s => s.trim()).filter(s => s.length > 0);
+    updateAgentField(agentId, 'expertise', expertise);
   };
 
   const handleSave = () => {
@@ -71,7 +63,6 @@ export default function AgentConfig() {
     <div className="min-h-screen bg-[#f0f2f5] p-4">
       <div className="max-w-2xl mx-auto slide-up">
         <div className="section-card overflow-hidden">
-          {/* 头部 */}
           <div className="gradient-bg-purple p-6 flex items-center gap-3">
             <button
               onClick={() => setCurrentPage('home')}
@@ -87,14 +78,12 @@ export default function AgentConfig() {
             </div>
           </div>
 
-          {/* 提示 */}
           {enabledModels.length === 0 && (
             <div className="mx-6 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-700 text-sm">
               请先在「设置」中启用至少一个模型，然后再配置 AI 角色。
             </div>
           )}
 
-          {/* AI 角色列表 */}
           <div className="p-6 space-y-3">
             {localAgents.map((agent) => {
               const currentModel = enabledModels.find((m) => m.id === agent.model);
@@ -109,7 +98,6 @@ export default function AgentConfig() {
                       : 'border-gray-200 bg-white'
                   }`}
                 >
-                  {/* 折叠头部 */}
                   <div
                     className="flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
                     onClick={() => setExpandedAgent(isExpanded ? null : agent.id)}
@@ -141,7 +129,6 @@ export default function AgentConfig() {
                       </div>
                     </div>
 
-                    {/* 开关 */}
                     <label
                       className="relative inline-flex items-center cursor-pointer shrink-0"
                       onClick={(e) => e.stopPropagation()}
@@ -155,7 +142,6 @@ export default function AgentConfig() {
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
 
-                    {/* 展开箭头 */}
                     {isExpanded ? (
                       <ChevronUp className="w-5 h-5 text-gray-400 shrink-0" />
                     ) : (
@@ -163,10 +149,8 @@ export default function AgentConfig() {
                     )}
                   </div>
 
-                  {/* 展开内容 - 不要求 agent.isActive */}
                   {isExpanded && (
                     <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4 fade-in">
-                      {/* 模型选择 */}
                       <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                           <div className="w-6 h-6 gradient-bg-blue rounded-md flex items-center justify-center">
@@ -188,7 +172,6 @@ export default function AgentConfig() {
                         </select>
                       </div>
 
-                      {/* 角色描述 */}
                       <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                           <div className="w-6 h-6 gradient-bg-green rounded-md flex items-center justify-center">
@@ -200,37 +183,43 @@ export default function AgentConfig() {
                           value={agent.description}
                           onChange={(e) => updateAgentField(agent.id, 'description', e.target.value)}
                           placeholder="描述这个 AI 的角色和专长..."
-                          rows={3}
+                          rows={2}
                           className="input-modern w-full px-3 py-2.5 text-sm resize-none"
                         />
                       </div>
 
-                      {/* Skill 配置 */}
                       <div>
                         <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                           <div className="w-6 h-6 gradient-bg-orange rounded-md flex items-center justify-center">
-                            <Wrench className="w-3.5 h-3.5 text-white" />
+                            <Sparkles className="w-3.5 h-3.5 text-white" />
                           </div>
-                          Skill 配置
+                          专长领域
                         </label>
-                        <div className="flex flex-wrap gap-2">
-                          {skills.map((skill) => {
-                            const isSelected = agent.skills.includes(skill.id);
-                            return (
-                              <button
-                                key={skill.id}
-                                onClick={() => toggleSkill(agent.id, skill.id)}
-                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                                  isSelected
-                                    ? 'bg-blue-600 text-white shadow-sm'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                              >
-                                {skill.name}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <input
+                          type="text"
+                          value={agent.expertise?.join('、') || ''}
+                          onChange={(e) => handleExpertiseChange(agent.id, e.target.value)}
+                          placeholder="用顿号或逗号分隔，如：前端开发、后端开发、系统架构"
+                          className="input-modern w-full px-3 py-2.5 text-sm"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">定义这个 AI 擅长的专业领域，用顿号或逗号分隔</p>
+                      </div>
+
+                      <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                          <div className="w-6 h-6 gradient-bg-rose rounded-md flex items-center justify-center">
+                            <Palette className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          沟通风格
+                        </label>
+                        <input
+                          type="text"
+                          value={agent.style || ''}
+                          onChange={(e) => updateAgentField(agent.id, 'style', e.target.value)}
+                          placeholder="如：逻辑清晰、幽默风趣、严谨细致..."
+                          className="input-modern w-full px-3 py-2.5 text-sm"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">描述这个 AI 的说话风格和性格特点</p>
                       </div>
                     </div>
                   )}
@@ -239,7 +228,6 @@ export default function AgentConfig() {
             })}
           </div>
 
-          {/* 保存按钮 */}
           <div className="p-6 border-t border-gray-100">
             <button
               onClick={handleSave}

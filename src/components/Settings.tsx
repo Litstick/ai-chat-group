@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
+import { themeList } from '../utils/storage';
+import { apiTestConnection } from '../api/client';
 import {
   Clock,
   Eye,
@@ -14,8 +16,14 @@ import {
   ArrowLeft,
   ShieldCheck,
   ShieldAlert,
+  Palette,
+  Zap,
+  LayoutGrid,
+  Loader2,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
-import type { AIModel, APIKeyConfig } from '../types';
+import type { APIKeyConfig, UILayout } from '../types';
 
 // 提供商配置映射
 const PROVIDER_CONFIG: Record<string, { label: string; color: string; letter: string; keyField: keyof APIKeyConfig; urlField: keyof APIKeyConfig; placeholder: string }> = {
@@ -27,6 +35,32 @@ const PROVIDER_CONFIG: Record<string, { label: string; color: string; letter: st
   moonshot: { label: 'Moonshot', color: 'sky', letter: 'M', keyField: 'moonshot', urlField: 'moonshotBaseUrl', placeholder: 'sk-...' },
   zhipu: { label: '智谱 AI', color: 'teal', letter: 'Z', keyField: 'zhipu', urlField: 'zhipuBaseUrl', placeholder: 'API Key' },
   baidu: { label: '百度文心一言', color: 'red', letter: 'B', keyField: 'baidu', urlField: 'baiduBaseUrl', placeholder: 'API Key' },
+};
+
+// 模型擅长领域描述映射
+const MODEL_DESCRIPTIONS: Record<string, string> = {
+  'gpt-4o': '擅长复杂推理、多模态理解、代码生成',
+  'gpt-4': '擅长复杂推理、逻辑分析、创意写作',
+  'gpt-3.5-turbo': '擅长日常对话、快速响应、基础任务',
+  'claude-3-opus': '擅长长文本分析、深度推理、创意写作',
+  'claude-3-sonnet': '擅长平衡推理、中等复杂任务',
+  'claude-3-haiku': '擅长快速响应、简单任务处理',
+  'claude-3-5-sonnet': '擅长平衡推理、中等复杂任务',
+  'claude-3-5-sonnet-20241022': '擅长平衡推理、中等复杂任务',
+  'gemini-1.5-pro': '擅长长文本处理、多模态理解',
+  'gemini-1.5-flash': '擅长快速响应、多模态任务',
+  'gemini-pro': '擅长平衡推理、通用任务',
+  'deepseek-chat': '擅长中文对话、编程辅助',
+  'deepseek-coder': '擅长代码生成、编程问题解答',
+  'qwen-max': '擅长中文理解、复杂推理',
+  'qwen-plus': '擅长日常对话、通用任务',
+  'qwen-turbo': '擅长快速响应、简单任务',
+  'moonshot-v1-8k': '擅长中文对话、创意写作',
+  'moonshot-v1-32k': '擅长长文本处理、复杂分析',
+  'glm-4': '擅长中文理解、复杂推理',
+  'glm-3-turbo': '擅长日常对话、快速响应',
+  'ernie-bot-4': '擅长中文理解、复杂推理',
+  'ernie-bot-turbo': '擅长日常对话、快速响应',
 };
 
 function getApiKeyForProvider(apiKeys: APIKeyConfig, provider: string): string {
@@ -47,6 +81,8 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
   const { settings, updateSettings } = useStore();
   const [localApiKeys, setLocalApiKeys] = useState(settings.apiKeys);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
+  const [testStatus, setTestStatus] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
+  const [testErrors, setTestErrors] = useState<Record<string, string>>({});
 
   const updateApiKey = (key: keyof APIKeyConfig, value: string) => {
     setLocalApiKeys((prev) => ({ ...prev, [key]: value }));
@@ -59,6 +95,32 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
 
   const toggleKeyVisibility = (key: string) => {
     setShowKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleTestConnection = async (provider: string, cfg: typeof PROVIDER_CONFIG[string]) => {
+    const apiKey = localApiKeys[cfg.keyField];
+    if (!apiKey) {
+      setTestStatus((prev) => ({ ...prev, [provider]: 'error' }));
+      setTestErrors((prev) => ({ ...prev, [provider]: '请先填写 API Key' }));
+      return;
+    }
+
+    setTestStatus((prev) => ({ ...prev, [provider]: 'loading' }));
+    setTestErrors((prev) => ({ ...prev, [provider]: '' }));
+
+    try {
+      const baseUrl = localApiKeys[cfg.urlField] || undefined;
+      const result = await apiTestConnection(provider, apiKey, baseUrl);
+      if (result.success) {
+        setTestStatus((prev) => ({ ...prev, [provider]: 'success' }));
+      } else {
+        setTestStatus((prev) => ({ ...prev, [provider]: 'error' }));
+        setTestErrors((prev) => ({ ...prev, [provider]: result.error || '连接失败' }));
+      }
+    } catch (err) {
+      setTestStatus((prev) => ({ ...prev, [provider]: 'error' }));
+      setTestErrors((prev) => ({ ...prev, [provider]: '请求失败，请检查网络' }));
+    }
   };
 
   const configuredCount = Object.entries(PROVIDER_CONFIG).filter(
@@ -82,6 +144,7 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
           <div className="p-6 space-y-4">
             {Object.entries(PROVIDER_CONFIG).map(([key, cfg]) => {
               const hasKey = !!localApiKeys[cfg.keyField];
+              const status = testStatus[key] || 'idle';
               return (
                 <div key={key} className={`rounded-xl p-4 border transition-colors ${hasKey ? 'bg-green-50/50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
                   <div className="flex items-center justify-between mb-3">
@@ -91,17 +154,32 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
                       </div>
                       <span className="font-semibold text-gray-900">{cfg.label}</span>
                     </div>
-                    {hasKey ? (
-                      <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2.5 py-1 rounded-full font-medium">
-                        <ShieldCheck className="w-3 h-3" />
-                        已配置
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
-                        <ShieldAlert className="w-3 h-3" />
-                        未配置
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {status === 'success' && (
+                        <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full font-medium">
+                          <CheckCircle className="w-3 h-3" />
+                          连接成功
+                        </span>
+                      )}
+                      {status === 'error' && (
+                        <span className="flex items-center gap-1 text-xs text-red-700 bg-red-100 px-2 py-1 rounded-full font-medium">
+                          <XCircle className="w-3 h-3" />
+                          连接失败
+                        </span>
+                      )}
+                      {hasKey && status === 'idle' && (
+                        <span className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2.5 py-1 rounded-full font-medium">
+                          <ShieldCheck className="w-3 h-3" />
+                          已配置
+                        </span>
+                      )}
+                      {!hasKey && (
+                        <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
+                          <ShieldAlert className="w-3 h-3" />
+                          未配置
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <div className="relative">
@@ -128,6 +206,25 @@ function ApiKeyPage({ onBack }: { onBack: () => void }) {
                         placeholder="API Base URL"
                         className="input-modern flex-1 px-3 py-2.5 text-sm"
                       />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleTestConnection(key, cfg)}
+                        disabled={!localApiKeys[cfg.keyField] || status === 'loading'}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {status === 'loading' ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            测试中...
+                          </>
+                        ) : (
+                          '测试连接'
+                        )}
+                      </button>
+                      {testErrors[key] && status === 'error' && (
+                        <span className="text-xs text-red-500 truncate">{testErrors[key]}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -235,6 +332,7 @@ function ModelPage({ onBack }: { onBack: () => void }) {
               {localModels.map((model) => {
                 const apiKey = getApiKeyForProvider(settings.apiKeys, model.provider);
                 const hasKey = !!apiKey;
+                const description = MODEL_DESCRIPTIONS[model.modelId] || '通用对话、问题解答';
                 return (
                   <div
                     key={model.id}
@@ -264,6 +362,10 @@ function ModelPage({ onBack }: { onBack: () => void }) {
                           )}
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">{model.provider} / {model.modelId}</div>
+                        <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                          <Zap className="w-3 h-3" />
+                          {description}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -388,6 +490,11 @@ export default function Settings() {
 
   const enabledCount = localSettings.models.filter((m) => m.isEnabled).length;
 
+  const hasAnyApiKey = Object.keys(PROVIDER_CONFIG).some((provider) => {
+    const config = PROVIDER_CONFIG[provider];
+    return localSettings.apiKeys?.[config.keyField];
+  });
+
   return (
     <div className="min-h-screen bg-[#f0f2f5] p-4">
       <div className="max-w-2xl mx-auto slide-up">
@@ -402,7 +509,7 @@ export default function Settings() {
               </button>
               <div>
                 <h1 className="text-xl font-bold text-white">设置</h1>
-                <p className="text-white/70 text-sm mt-0.5">配置 AI 聊天群的各项参数</p>
+                <p className="text-white/70 text-sm mt-0.5">配置灵犀 LingXi的各项参数</p>
               </div>
             </div>
           </div>
@@ -411,15 +518,24 @@ export default function Settings() {
             {/* API Key 入口 */}
             <button
               onClick={() => setSubPage('apikey')}
-              className="w-full rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all border border-gray-100 bg-white"
+              className={`w-full rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all border ${
+                hasAnyApiKey ? 'border-gray-100 bg-white' : 'border-amber-200 bg-amber-50'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 gradient-bg-rose rounded-xl flex items-center justify-center shadow-sm">
+                <div className={`w-10 h-10 ${hasAnyApiKey ? 'gradient-bg-rose' : 'bg-amber-500'} rounded-xl flex items-center justify-center shadow-sm`}>
                   <Key className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-left">
-                  <div className="font-semibold text-gray-900">API Key 配置</div>
-                  <div className="text-sm text-gray-500">管理 AI 提供商密钥和接口地址</div>
+                  <div className="font-semibold text-gray-900 flex items-center gap-2">
+                    API Key 配置
+                    {!hasAnyApiKey && (
+                      <span className="text-xs text-amber-700 bg-amber-200 px-1.5 py-0.5 rounded font-medium">待配置</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {hasAnyApiKey ? '已配置部分 AI 提供商密钥' : '使用前请先配置 API 密钥'}
+                  </div>
                 </div>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -506,6 +622,68 @@ export default function Settings() {
               </div>
             </section>
 
+            {/* 主题设置 */}
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <Palette className="w-5 h-5 text-purple-500" />
+                <h2 className="text-base font-semibold text-gray-900">主题设置</h2>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="grid grid-cols-5 gap-3">
+                  {themeList.map((theme) => {
+                    const isSelected = localSettings.theme === theme.id;
+                    return (
+                      <button
+                        key={theme.id}
+                        onClick={() => setLocalSettings({ ...localSettings, theme: theme.id })}
+                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-transparent bg-white hover:border-gray-200'
+                        }`}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-full shadow-sm"
+                          style={{ background: theme.primaryColor }}
+                        />
+                        <span className="text-xs font-medium text-gray-700">{theme.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            {/* UI 布局设置 */}
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <LayoutGrid className="w-5 h-5 text-indigo-500" />
+                <h2 className="text-base font-semibold text-gray-900">UI 布局</h2>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { value: 'compact' as UILayout, label: '紧凑', desc: '减少间距，适合小屏' },
+                    { value: 'standard' as UILayout, label: '标准', desc: '默认布局，适合大多数' },
+                    { value: 'spacious' as UILayout, label: '宽松', desc: '增加留白，适合大屏' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setLocalSettings({ ...localSettings, uiLayout: option.value })}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        localSettings.uiLayout === option.value
+                          ? 'border-indigo-400 bg-indigo-50 shadow-sm'
+                          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="font-semibold text-gray-900 text-sm mb-1">{option.label}</div>
+                      <div className="text-xs text-gray-500 leading-relaxed">{option.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+
             {/* 聊天时长 */}
             <section>
               <div className="flex items-center gap-2 mb-3">
@@ -533,6 +711,36 @@ export default function Settings() {
                     <span className="text-gray-500 text-sm">分钟</span>
                   </div>
                 )}
+              </div>
+            </section>
+
+            {/* AI 回复频率 */}
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <Zap className="w-5 h-5 text-amber-500" />
+                <h2 className="text-base font-semibold text-gray-900">AI 回复频率</h2>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { value: 'slow', label: '慢', desc: 'AI 每两条消息后回复，且不会多个 AI 同时回复' },
+                    { value: 'medium', label: '中', desc: 'AI 正常回复，适合大多数场景' },
+                    { value: 'fast', label: '快', desc: '多个 AI 可同时回复，消耗更多 Token' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setLocalSettings({ ...localSettings, replyFrequency: option.value as 'slow' | 'medium' | 'fast' })}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${
+                        localSettings.replyFrequency === option.value
+                          ? 'border-amber-400 bg-amber-50 shadow-sm'
+                          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="font-semibold text-gray-900 text-sm mb-1">{option.label}</div>
+                      <div className="text-xs text-gray-500 leading-relaxed">{option.desc}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </section>
           </div>

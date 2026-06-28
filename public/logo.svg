@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <!-- 主渐变：蓝紫渐变 -->
+    <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+    <!-- 高光渐变 -->
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#a78bfa" />
+    </linearGradient>
+    <!-- 内部光效 -->
+    <radialGradient id="innerGlow" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- 外圈：主圆形背景 -->
+  <circle cx="100" cy="100" r="96" fill="url(#mainGrad)" />
+  
+  <!-- 抽象符号：三个相互连接的"灵"之环 -->
+  <!-- 环绕的轨道线（象征思维的流动） -->
+  <ellipse cx="100" cy="100" rx="65" ry="65" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="4 6" />
+  <ellipse cx="100" cy="100" rx="45" ry="45" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="3 5" />
+
+  <!-- 三个核心节点（代表AI Agent） -->
+  <!-- 上方节点 -->
+  <circle cx="100" cy="55" r="18" fill="rgba(255,255,255,0.95)" />
+  <circle cx="100" cy="55" r="14" fill="url(#mainGrad)" opacity="0.9" />
+  
+  <!-- 左下节点 -->
+  <circle cx="55" cy="120" r="18" fill="rgba(255,255,255,0.95)" />
+  <circle cx="55" cy="120" r="14" fill="url(#mainGrad)" opacity="0.85" />
+  
+  <!-- 右下节点 -->
+  <circle cx="145" cy="120" r="18" fill="rgba(255,255,255,0.95)" />
+  <circle cx="145" cy="120" r="14" fill="url(#mainGrad)" opacity="0.85" />
+
+  <!-- 连接线（象征思维连接） -->
+  <line x1="100" y1="73" x2="65" y2="108" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" />
+  <line x1="100" y1="73" x2="135" y2="108" stroke="rgba(255,255,255,0.6)" stroke-width="2" stroke-linecap="round" />
+  <line x1="68" y1="120" x2="132" y2="120" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round" />
+
+  <!-- 中心交汇点（灵犀的核心） -->
+  <circle cx="100" cy="100" r="12" fill="rgba(255,255,255,0.9)" />
+  <circle cx="100" cy="100" r="8" fill="url(#glowGrad)" />
+  <circle cx="100" cy="100" r="4" fill="#ffffff" />
+
+  <!-- 微光粒子效果 -->
+  <circle cx="80" cy="85" r="2" fill="rgba(255,255,255,0.4)" />
+  <circle cx="120" cy="85" r="2" fill="rgba(255,255,255,0.4)" />
+  <circle cx="100" cy="140" r="1.5" fill="rgba(255,255,255,0.3)" />
+  <circle cx="70" cy="105" r="1.5" fill="rgba(255,255,255,0.25)" />
+  <circle cx="130" cy="105" r="1.5" fill="rgba(255,255,255,0.25)" />
+
+  <!-- 外圈光晕效果 -->
+  <circle cx="100" cy="100" r="96" fill="none" stroke="url(#glowGrad)" stroke-width="1" opacity="0.4" />
+  
+  <!-- 顶部高光 -->
+  <ellipse cx="100" cy="60" rx="50" ry="20" fill="url(#innerGlow)" />
+</svg>

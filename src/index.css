@@ -3,12 +3,120 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root,
+  [data-theme='default'] {
     --primary: #2563eb;
     --primary-light: #3b82f6;
     --primary-dark: #1d4ed8;
     --gradient-start: #667eea;
     --gradient-end: #764ba2;
+    --blue-gradient-start: #2563eb;
+    --blue-gradient-end: #7c3aed;
+    --green-gradient-start: #059669;
+    --green-gradient-end: #0891b2;
+    --orange-gradient-start: #ea580c;
+    --orange-gradient-end: #d97706;
+    --purple-gradient-start: #7c3aed;
+    --purple-gradient-end: #db2777;
+    --rose-gradient-start: #e11d48;
+    --rose-gradient-end: #be123c;
+    --bg-primary: #f0f2f5;
+    --bg-card: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+  }
+
+  [data-theme='warm'] {
+    --primary: #ea580c;
+    --primary-light: #f97316;
+    --primary-dark: #c2410c;
+    --gradient-start: #f97316;
+    --gradient-end: #eab308;
+    --blue-gradient-start: #ea580c;
+    --blue-gradient-end: #dc2626;
+    --green-gradient-start: #65a30d;
+    --green-gradient-end: #ca8a04;
+    --orange-gradient-start: #ea580c;
+    --orange-gradient-end: #d97706;
+    --purple-gradient-start: #dc2626;
+    --purple-gradient-end: #ea580c;
+    --rose-gradient-start: #dc2626;
+    --rose-gradient-end: #b91c1c;
+    --bg-primary: #fff7ed;
+    --bg-card: #ffffff;
+    --text-primary: #431407;
+    --text-secondary: #9a3412;
+    --border-color: #fed7aa;
+  }
+
+  [data-theme='cool'] {
+    --primary: #059669;
+    --primary-light: #10b981;
+    --primary-dark: #047857;
+    --gradient-start: #10b981;
+    --gradient-end: #0891b2;
+    --blue-gradient-start: #0891b2;
+    --blue-gradient-end: #059669;
+    --green-gradient-start: #059669;
+    --green-gradient-end: #0891b2;
+    --orange-gradient-start: #0d9488;
+    --orange-gradient-end: #0891b2;
+    --purple-gradient-start: #0e7490;
+    --purple-gradient-end: #059669;
+    --rose-gradient-start: #0891b2;
+    --rose-gradient-end: #0e7490;
+    --bg-primary: #f0fdf4;
+    --bg-card: #ffffff;
+    --text-primary: #052e16;
+    --text-secondary: #166534;
+    --border-color: #bbf7d0;
+  }
+
+  [data-theme='purple'] {
+    --primary: #7c3aed;
+    --primary-light: #8b5cf6;
+    --primary-dark: #6d28d9;
+    --gradient-start: #8b5cf6;
+    --gradient-end: #ec4899;
+    --blue-gradient-start: #7c3aed;
+    --blue-gradient-end: #6366f1;
+    --green-gradient-start: #8b5cf6;
+    --green-gradient-end: #a855f7;
+    --orange-gradient-start: #a855f7;
+    --orange-gradient-end: #c026d3;
+    --purple-gradient-start: #7c3aed;
+    --purple-gradient-end: #db2777;
+    --rose-gradient-start: #be185d;
+    --rose-gradient-end: #7c3aed;
+    --bg-primary: #faf5ff;
+    --bg-card: #ffffff;
+    --text-primary: #3b0764;
+    --text-secondary: #7c3aed;
+    --border-color: #e9d5ff;
+  }
+
+  [data-theme='dark'] {
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --gradient-start: #6366f1;
+    --gradient-end: #8b5cf6;
+    --blue-gradient-start: #4f46e5;
+    --blue-gradient-end: #7c3aed;
+    --green-gradient-start: #059669;
+    --green-gradient-end: #0891b2;
+    --orange-gradient-start: #ea580c;
+    --orange-gradient-end: #d97706;
+    --purple-gradient-start: #7c3aed;
+    --purple-gradient-end: #db2777;
+    --rose-gradient-start: #e11d48;
+    --rose-gradient-end: #be123c;
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
   }
 
   html {
@@ -19,70 +127,78 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC',
       'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
-    background: #f0f2f5;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
   }
 }
 
 @layer components {
   .glass-card {
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--bg-card);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--border-color);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
   }
 
   .gradient-bg-blue {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, var(--blue-gradient-start) 0%, var(--blue-gradient-end) 100%);
   }
 
   .gradient-bg-green {
-    background: linear-gradient(135deg, #059669 0%, #0891b2 100%);
+    background: linear-gradient(135deg, var(--green-gradient-start) 0%, var(--green-gradient-end) 100%);
   }
 
   .gradient-bg-orange {
-    background: linear-gradient(135deg, #ea580c 0%, #d97706 100%);
+    background: linear-gradient(135deg, var(--orange-gradient-start) 0%, var(--orange-gradient-end) 100%);
   }
 
   .gradient-bg-purple {
-    background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+    background: linear-gradient(135deg, var(--purple-gradient-start) 0%, var(--purple-gradient-end) 100%);
   }
 
   .gradient-bg-rose {
-    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+    background: linear-gradient(135deg, var(--rose-gradient-start) 0%, var(--rose-gradient-end) 100%);
   }
 
   .chat-bubble-ai {
-    background: white;
-    border: 1px solid #e5e7eb;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 2px 16px 16px 16px;
   }
 
   .chat-bubble-user {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, var(--blue-gradient-start) 0%, var(--blue-gradient-end) 100%);
     color: white;
     border-radius: 16px 2px 16px 16px;
   }
 
   .input-modern {
-    background: #f3f4f6;
+    background: var(--bg-primary);
     border: 2px solid transparent;
     border-radius: 14px;
     transition: all 0.2s;
+    color: var(--text-primary);
   }
 
   .input-modern:focus {
-    background: white;
-    border-color: #2563eb;
+    background: var(--bg-card);
+    border-color: var(--primary);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
     outline: none;
   }
 
+  .input-modern::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+  }
+
   .btn-primary {
-    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, var(--blue-gradient-start) 0%, var(--blue-gradient-end) 100%);
     color: white;
     font-weight: 600;
     border-radius: 14px;
@@ -107,10 +223,11 @@
   }
 
   .section-card {
-    background: white;
+    background: var(--bg-card);
     border-radius: 20px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
   }
 
   .fade-in {
@@ -123,6 +240,15 @@
 
   .pulse-dot {
     animation: pulseDot 2s infinite;
+  }
+
+  .mask-gradient-bottom {
+    -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  }
+
+  .pt-safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
 
@@ -150,3 +276,87 @@
     display: none;
   }
 }
+
+/* ===== UI Layout Styles ===== */
+
+/* Compact Layout - 紧凑布局 */
+[data-layout='compact'] {
+  --layout-spacing-base: 0.5rem;
+  --layout-spacing-section: 0.75rem;
+  --layout-padding-card: 0.75rem;
+  --layout-padding-section: 1rem;
+  --layout-gap-items: 0.5rem;
+  --layout-gap-grid: 0.75rem;
+}
+
+.layout-compact .p-4 { padding: 0.75rem; }
+.layout-compact .p-5 { padding: 0.875rem; }
+.layout-compact .p-6 { padding: 1rem; }
+.layout-compact .py-6 { padding-top: 1rem; padding-bottom: 1rem; }
+.layout-compact .px-4 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.layout-compact .py-4 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.layout-compact .py-3 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.layout-compact .pt-4 { padding-top: 0.75rem; }
+.layout-compact .pb-4 { padding-bottom: 0.75rem; }
+.layout-compact .space-y-4 > * + * { margin-top: 0.75rem; }
+.layout-compact .space-y-6 > * + * { margin-top: 1rem; }
+.layout-compact .space-y-3 > * + * { margin-top: 0.5rem; }
+.layout-compact .gap-4 { gap: 0.75rem; }
+.layout-compact .gap-6 { gap: 1rem; }
+.layout-compact .gap-3 { gap: 0.5rem; }
+.layout-compact .gap-2 { gap: 0.375rem; }
+.layout-compact .mb-4 { margin-bottom: 0.75rem; }
+.layout-compact .mb-6 { margin-bottom: 1rem; }
+.layout-compact .mt-4 { margin-top: 0.75rem; }
+.layout-compact .mt-6 { margin-top: 1rem; }
+.layout-compact .text-sm { font-size: 0.8125rem; }
+.layout-compact .text-base { font-size: 0.875rem; }
+.layout-compact .text-lg { font-size: 1rem; }
+.layout-compact .section-card { padding: 0.75rem; }
+.layout-compact .glass-card { padding: 0.75rem; }
+
+/* Standard Layout - 当前默认布局（保持不变） */
+[data-layout='standard'] {
+  --layout-spacing-base: 1rem;
+  --layout-spacing-section: 1.5rem;
+  --layout-padding-card: 1rem;
+  --layout-padding-section: 1.5rem;
+  --layout-gap-items: 1rem;
+  --layout-gap-grid: 1rem;
+}
+
+/* Spacious Layout - 宽松布局 */
+[data-layout='spacious'] {
+  --layout-spacing-base: 1.5rem;
+  --layout-spacing-section: 2rem;
+  --layout-padding-card: 1.5rem;
+  --layout-padding-section: 2rem;
+  --layout-gap-items: 1.5rem;
+  --layout-gap-grid: 1.25rem;
+}
+
+.layout-spacious .p-4 { padding: 1.25rem; }
+.layout-spacious .p-5 { padding: 1.5rem; }
+.layout-spacious .p-6 { padding: 2rem; }
+.layout-spacious .py-6 { padding-top: 2rem; padding-bottom: 2rem; }
+.layout-spacious .px-4 { padding-left: 1.25rem; padding-right: 1.25rem; }
+.layout-spacious .py-4 { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+.layout-spacious .py-3 { padding-top: 1rem; padding-bottom: 1rem; }
+.layout-spacious .pt-4 { padding-top: 1.25rem; }
+.layout-spacious .pb-4 { padding-bottom: 1.25rem; }
+.layout-spacious .space-y-4 > * + * { margin-top: 1.25rem; }
+.layout-spacious .space-y-6 > * + * { margin-top: 2rem; }
+.layout-spacious .space-y-3 > * + * { margin-top: 1rem; }
+.layout-spacious .gap-4 { gap: 1.25rem; }
+.layout-spacious .gap-6 { gap: 2rem; }
+.layout-spacious .gap-3 { gap: 1rem; }
+.layout-spacious .gap-2 { gap: 0.75rem; }
+.layout-spacious .mb-4 { margin-bottom: 1.25rem; }
+.layout-spacious .mb-6 { margin-bottom: 2rem; }
+.layout-spacious .mt-4 { margin-top: 1.25rem; }
+.layout-spacious .mt-6 { margin-top: 2rem; }
+.layout-spacious .text-sm { font-size: 0.9375rem; }
+.layout-spacious .text-base { font-size: 1.0625rem; }
+.layout-spacious .text-lg { font-size: 1.25rem; }
+.layout-spacious .section-card { padding: 1.5rem; }
+.layout-spacious .glass-card { padding: 1.5rem; }

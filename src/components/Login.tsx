@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { apiLogin, apiRegister } from '../api/client';
-import { LogIn, UserPlus, MessageCircle, AlertCircle, User, Lock, X, Loader2 } from 'lucide-react';
+import { apiLogin, apiRegister, apiSendVerifyCode } from '../api/client';
+import { LogIn, UserPlus, AlertCircle, User, Lock, X, Loader2, Phone, KeyRound } from 'lucide-react';
 
 export default function Login() {
   const { login, setCurrentPage } = useStore();
@@ -18,7 +18,56 @@ export default function Login() {
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regNickname, setRegNickname] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regVerifyCode, setRegVerifyCode] = useState('');
   const [regError, setRegError] = useState('');
+  const [sendingCode, setSendingCode] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 清理倒计时
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+    };
+  }, []);
+
+  // 发送验证码
+  const handleSendCode = async () => {
+    setRegError('');
+    if (!regPhone.trim() || !/^1[3-9]\d{9}$/.test(regPhone.trim())) {
+      setRegError('请输入正确的手机号');
+      return;
+    }
+
+    setSendingCode(true);
+    try {
+      const result = await apiSendVerifyCode(regPhone.trim());
+      if (!result.success) {
+        setRegError(result.error || '发送验证码失败');
+        return;
+      }
+      // 开始倒计时
+      setCountdown(60);
+      countdownRef.current = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            if (countdownRef.current) {
+              clearInterval(countdownRef.current);
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      setRegError('网络错误，请检查服务端是否启动');
+    } finally {
+      setSendingCode(false);
+    }
+  };
 
   const handleLogin = async () => {
     setLoginError('');
@@ -58,9 +107,23 @@ export default function Login() {
       setRegError('密码长度不能少于 6 位');
       return;
     }
+    if (!regPhone.trim() || !/^1[3-9]\d{9}$/.test(regPhone.trim())) {
+      setRegError('请输入正确的手机号');
+      return;
+    }
+    if (!regVerifyCode.trim() || !/^\d{6}$/.test(regVerifyCode.trim())) {
+      setRegError('请输入 6 位数字验证码');
+      return;
+    }
     setLoading(true);
     try {
-      const result = await apiRegister(regUsername.trim(), regPassword, regNickname.trim());
+      const result = await apiRegister(
+        regUsername.trim(),
+        regPassword,
+        regPhone.trim(),
+        regVerifyCode.trim(),
+        regNickname.trim()
+      );
       if (!result.success) {
         setRegError(result.error || '注册失败');
         return;
@@ -92,11 +155,11 @@ export default function Login() {
       <div className="w-full max-w-md fade-in">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="w-20 h-20 gradient-bg-blue rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-500/25">
-            <MessageCircle className="w-10 h-10 text-white" />
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-blue-500/25 overflow-hidden">
+            <img src="/logo.svg" alt="灵犀" className="w-full h-full" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">AI 聊天群</h1>
-          <p className="text-white/70 text-base">与多个 AI 一起协作讨论，开启智能对话新体验</p>
+          <h1 className="text-3xl font-bold text-white mb-2">灵犀 LingXi</h1>
+          <p className="text-white/70 text-base">多 AI 角色协作讨论，汇聚群体智慧</p>
         </div>
 
         {/* Card */}
@@ -261,11 +324,59 @@ export default function Login() {
                         type="password"
                         value={regConfirmPassword}
                         onChange={(e) => setRegConfirmPassword(e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, handleRegister)}
                         placeholder="请再次输入密码"
                         className={inputBaseClass}
                         aria-label="确认密码"
                       />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      手机号
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="tel"
+                        value={regPhone}
+                        onChange={(e) => setRegPhone(e.target.value)}
+                        placeholder="请输入手机号"
+                        className={inputBaseClass}
+                        aria-label="手机号"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      验证码
+                    </label>
+                    <div className="flex gap-3">
+                      <div className="relative flex-1">
+                        <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={regVerifyCode}
+                          onChange={(e) => setRegVerifyCode(e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, handleRegister)}
+                          placeholder="请输入验证码"
+                          maxLength={6}
+                          className={`${inputBaseClass} pr-4`}
+                          aria-label="验证码"
+                        />
+                      </div>
+                      <button
+                        onClick={handleSendCode}
+                        disabled={sendingCode || countdown > 0}
+                        className="px-4 py-3 bg-blue-500 text-white text-sm font-medium rounded-xl transition-all duration-200 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      >
+                        {sendingCode ? (
+                          <Loader2 className="w-4 h-4 animate-spin inline-block" />
+                        ) : countdown > 0 ? (
+                          `${countdown}s`
+                        ) : (
+                          '发送验证码'
+                        )}
+                      </button>
                     </div>
                   </div>
                   <div>

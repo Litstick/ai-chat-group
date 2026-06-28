@@ -9,11 +9,21 @@ import Login from './components/Login';
 import Profile from './components/Profile';
 
 function App() {
-  const { currentPage, currentUser, initialized, initApp } = useStore();
+  const { currentPage, currentUser, initialized, initApp, settings } = useStore();
 
   useEffect(() => {
     initApp();
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', settings.theme || 'default');
+  }, [settings.theme]);
+
+  useEffect(() => {
+    const layout = settings.uiLayout || 'standard';
+    document.documentElement.setAttribute('data-layout', layout);
+    document.body.className = `layout-${layout}`;
+  }, [settings.uiLayout]);
 
   if (!initialized) {
     return (
@@ -29,7 +39,7 @@ function App() {
   if (!currentUser) return <Login />;
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5]">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {currentPage === 'home' && <Home />}
       {currentPage === 'settings' && <Settings />}
       {currentPage === 'chat' && <ChatRoom />}

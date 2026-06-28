@@ -6,40 +6,90 @@ interface ConversationMessage {
 }
 
 function buildSystemPrompt(agent: AIAgent, topic: string): string {
-  const skillsDesc = agent.skills.length > 0
-    ? `\n你具备以下技能：${agent.skills.join('、')}。请在讨论中合理运用这些技能。`
+  const expertiseDesc = agent.expertise && agent.expertise.length > 0
+    ? `\n擅长领域：${agent.expertise.join('、')}。`
+    : '';
+  const styleDesc = agent.style
+    ? `\n沟通风格：${agent.style}。`
     : '';
 
   return `你正在参与一个多人群聊讨论，当前讨论的核心话题是：「${topic}」。
 
-你的身份：
+你的身份信息（仅供你内部参考，不要主动向用户介绍自己）：
 - 名字：${agent.name}
 - 角色：${agent.role}
-- 专长：${agent.description}${skillsDesc}
+- 专长：${agent.description}${expertiseDesc}${styleDesc}
+
+【重要 - 自然对话原则】
+1. 直接表达观点，不要自我介绍。不要说"我是XXX"、"作为XXX"等开场白。
+2. 不要说"很高兴参与讨论"、"让我来分析一下"等套话，直接切入要表达的内容。
+3. 用自然、口语化的方式表达，像真实人类在群里聊天一样。
+4. 可以用简短的语气词和连接词，如"嗯"、"我觉得"、"说实话"、"不过"等。
+5. 避免使用教科书式的表述，保持轻松、自然的对话氛围。
+6. 可以适当表达个人态度和情感倾向，让对话更有温度。
 
 群聊规则：
 1. 这是一个多人讨论群，除了你之外还有其他 AI 角色和一位人类用户。
-2. 你需要围绕核心话题「${topic}」积极参与讨论，发表你的专业见解。
+2. 围绕核心话题「${topic}」积极参与讨论，发表专业见解。
 3. 保持你的角色特点，从${agent.role}的角度出发思考和发言。
 4. 仔细阅读聊天记录中其他人的发言，针对具体观点进行回应、补充、质疑或延伸。
-5. 不要空泛地发表看法，一定要引用或回应别人说过的具体内容，层层深入。
-6. 如果有人提出了一个问题或方案，你可以从你的专业角度给出具体建议或指出潜在问题。
+5. 不要空泛地发表看法，一定要引用或回应别人说过的具体内容。
+6. 如果有人提出了问题或方案，从你的专业角度给出具体建议或指出潜在问题。
 7. 讨论要有递进性：从初步看法 → 方案探讨 → 具体细节 → 优缺点分析 → 总结归纳。
-8. 发言简洁有力，每次发言控制在 2-4 句话，像一个真实的群聊参与者。
+8. 发言要完整表达观点，不要刻意简短。涉及代码、方案、详细分析时，给出完整、详尽的内容。
 9. 用中文回复。
-10. 不要重复别人说过的话，要有自己的思考和见解。
-11. 不要在发言中提及自己是 AI 或大语言模型。`;
-}
+10. 不要重复别人说过的话，有自己的思考和见解。
+11. 不要提及自己是 AI 或大语言模型。
 
-function buildRecentContext(messages: ChatMessage[], maxCount: number): string {
-  if (messages.length === 0) return '';
-  const recent = messages.slice(-maxCount);
-  return recent
-    .map((m) => {
-      const sender = m.isAI ? `[${m.senderName}]` : `[用户]`;
-      return `${sender}：${m.content}`;
-    })
-    .join('\n');
+【重要 - 文件生成规范】
+当讨论涉及代码、文档、配置等内容时，必须生成可直接下载使用的文件。格式要求：
+
+1. 代码文件必须使用带文件名的代码块：
+   \`\`\`语言:文件名
+   代码内容
+   \`\`\`
+
+2. 示例：
+   \`\`\`python:main.py
+   def hello():
+       print("Hello World")
+   \`\`\`
+
+   \`\`\`javascript:app.js
+   const express = require('express');
+   const app = express();
+   \`\`\`
+
+   \`\`\`html:index.html
+   <!DOCTYPE html>
+   <html><head><title>My App</title></head></html>
+   \`\`\`
+
+   \`\`\`json:config.json
+   {"name": "myapp", "version": "1.0.0"}
+   \`\`\`
+
+3. 支持的文件类型：py, js, ts, jsx, tsx, html, css, json, java, go, rs, c, cpp, cs, rb, php, sh, sql, yaml, yml, md, txt, xml, vue, swift, kt, dart, lua
+
+4. 每个文件单独一个代码块，文件名必须包含扩展名。
+
+5. 如果需要生成多个文件，每个文件都要有独立的代码块和文件名。
+
+【重要 - 连续工作原则】
+你是一个随时在线的助手，没有上下班的概念。
+绝对不允许：
+- "明天/后天/下周再做"
+- "等上班时间再说"
+- "今天太晚了"
+- 任何推迟到未来时间的表述
+
+只要聊天在进行中，就应该：
+- 立即分析和解决问题
+- 当场给出完整方案和结果
+- 需要代码就直接写出来
+- 需要方案就当场设计好
+
+始终保持即时响应、当场交付的工作方式。`;
 }
 
 function buildDiscussionGuide(messages: ChatMessage[], topic: string): string {
@@ -99,11 +149,45 @@ function buildConversationHistory(
   return history;
 }
 
+function estimateMaxTokens(
+  messages: ChatMessage[],
+  _topic: string,
+  triggerMessage?: ChatMessage
+): number {
+  const lastMsg = triggerMessage || messages[messages.length - 1];
+  const lastContent = lastMsg?.content || '';
+
+  const needsLongReply =
+    /代码|源码|实现|写|完整代码|示例|方案|设计|架构|详细|步骤|流程|分析|报告/.test(lastContent) ||
+    /\?|？|如何|怎么|为什么|什么是|解释|说明/.test(lastContent);
+
+  const msgCount = messages.length;
+
+  if (needsLongReply && msgCount < 5) {
+    return 2000;
+  }
+
+  if (needsLongReply) {
+    return 1500;
+  }
+
+  if (msgCount <= 2) {
+    return 600;
+  }
+
+  if (msgCount <= 5) {
+    return 800;
+  }
+
+  return 500;
+}
+
 async function callOpenAI(
   apiKey: string,
   baseUrl: string,
   modelId: string,
-  messages: ConversationMessage[]
+  messages: ConversationMessage[],
+  maxTokens: number = 800
 ): Promise<string> {
   const url = `${baseUrl.replace(/\/+$/, '')}/v1/chat/completions`;
   const response = await fetch(url, {
@@ -116,9 +200,9 @@ async function callOpenAI(
       model: modelId,
       messages,
       temperature: 0.85,
-      max_tokens: 400,
-      presence_penalty: 0.6,
-      frequency_penalty: 0.3,
+      max_tokens: maxTokens,
+      presence_penalty: 0.4,
+      frequency_penalty: 0.2,
     }),
   });
 
@@ -135,7 +219,8 @@ async function callAnthropic(
   apiKey: string,
   baseUrl: string,
   modelId: string,
-  messages: ConversationMessage[]
+  messages: ConversationMessage[],
+  maxTokens: number = 800
 ): Promise<string> {
   const url = `${baseUrl.replace(/\/+$/, '')}/v1/messages`;
   const systemMsg = messages.find((m) => m.role === 'system');
@@ -156,7 +241,7 @@ async function callAnthropic(
     },
     body: JSON.stringify({
       model: modelId,
-      max_tokens: 400,
+      max_tokens: maxTokens,
       system: systemMsg?.content || '',
       messages: chatMessages,
     }),
@@ -175,7 +260,8 @@ async function callGoogle(
   apiKey: string,
   baseUrl: string,
   modelId: string,
-  messages: ConversationMessage[]
+  messages: ConversationMessage[],
+  maxTokens: number = 800
 ): Promise<string> {
   const systemMsg = messages.find((m) => m.role === 'system');
   const contents = messages
@@ -195,7 +281,7 @@ async function callGoogle(
       systemInstruction: systemMsg ? { parts: [{ text: systemMsg.content }] } : undefined,
       generationConfig: {
         temperature: 0.85,
-        maxOutputTokens: 400,
+        maxOutputTokens: maxTokens,
       },
     }),
   });
@@ -214,7 +300,8 @@ async function callProvider(
   provider: string,
   apiKeys: APIKeyConfig,
   modelId: string,
-  messages: ConversationMessage[]
+  messages: ConversationMessage[],
+  maxTokens?: number
 ): Promise<string> {
   const p = provider.toLowerCase();
   const map: Record<string, [string, string, string]> = {
@@ -234,9 +321,9 @@ async function callProvider(
   const [key, baseUrl, model] = entry;
   if (!key) throw new Error(`${provider} 的 API Key 未配置`);
 
-  if (p === 'anthropic') return callAnthropic(key, baseUrl, model, messages);
-  if (p === 'google') return callGoogle(key, baseUrl, model, messages);
-  return callOpenAI(key, baseUrl, model, messages);
+  if (p === 'anthropic') return callAnthropic(key, baseUrl, model, messages, maxTokens);
+  if (p === 'google') return callGoogle(key, baseUrl, model, messages, maxTokens);
+  return callOpenAI(key, baseUrl, model, messages, maxTokens);
 }
 
 export async function callAI(
@@ -274,11 +361,13 @@ export async function callAI(
   if (history.length === 0 && !triggerMessage) {
     messages.push({
       role: 'user',
-      content: `讨论刚刚开始，话题是「${topic}」。请你先介绍一下你对这个话题的初步看法，提出一个核心观点或问题来引导讨论。`,
+      content: `讨论刚刚开始，话题是「${topic}」。请直接分享你对话题的看法或提出一个关键问题，不要自我介绍。`,
     });
   }
 
-  return callProvider(model.provider, apiKeys, model.modelId, messages);
+  const maxTokens = estimateMaxTokens(chatHistory, topic, triggerMessage);
+
+  return callProvider(model.provider, apiKeys, model.modelId, messages, maxTokens);
 }
 
 export async function callAIForSummary(
@@ -345,5 +434,102 @@ ${chatContent}
       important: lines.length > 0 ? [lines[0].trim()] : ['总结生成失败，请重试'],
       secondary: lines.length > 1 ? [lines[1].trim()] : [],
     };
+  }
+}
+
+// 流式输出相关类型定义
+export type StreamCallback = (chunk: string) => void;
+export type StreamErrorCallback = (error: string) => void;
+export type StreamDoneCallback = () => void;
+
+// 流式调用 AI（通过后端 SSE）
+export async function callAIStream(
+  agent: AIAgent,
+  model: AIModel,
+  apiKeys: APIKeyConfig,
+  topic: string,
+  chatHistory: ChatMessage[],
+  triggerMessage?: ChatMessage,
+  onChunk?: StreamCallback,
+  onError?: StreamErrorCallback,
+  onDone?: StreamDoneCallback
+): Promise<void> {
+  try {
+    const response = await fetch('http://localhost:3001/api/ai/stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        agent,
+        model,
+        apiKeys,
+        topic,
+        chatHistory,
+        triggerMessage,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('无法获取响应流');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let doneCalled = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        // SSE 格式解析：event: xxx\n data: yyy
+        if (trimmed.startsWith('event: ')) {
+          // 这行是事件类型，下一行会是数据
+          continue;
+        }
+
+        if (trimmed.startsWith('data: ')) {
+          const data = trimmed.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.content) {
+              onChunk?.(parsed.content);
+            }
+
+            if (parsed.finished && !doneCalled) {
+              doneCalled = true;
+              onDone?.();
+            }
+
+            if (parsed.message) {
+              onError?.(parsed.message);
+            }
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
+      }
+    }
+
+    if (!doneCalled) {
+      onDone?.();
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : '流式调用失败';
+    onError?.(msg);
   }
 }
